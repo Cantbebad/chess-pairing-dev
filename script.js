@@ -613,7 +613,7 @@ class Controller {
 		}
 	}
 
-	importDemo(confirmed = false) {
+	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
 		let players = [
 			{"name": "Magnus", "Elo": 2833},
 			{"name": "Fabiano", "Elo": 2803},
@@ -626,6 +626,14 @@ class Controller {
 			{"name": "Ian", "Elo": 2754},
 			{"name": "Anand", "Elo": 2750}
 		]
+
+		// user could have added some players manually already
+		let playersSoFar = this.data.players.length + players.length
+		// this triggers on [true, false] or [false, true]
+		if ( evenNumOfPlayers !== (playersSoFar % 2 === 0) ) 
+		{
+			players.push({"name": "Wildcard Player 1", "Elo": 2700 })
+		}
 
 		players.forEach(player => {
 			// batch mode
@@ -1163,29 +1171,55 @@ class Controller {
 	// ************************************************************
 	// some test functions
 
-	generateTestResults() {
+	generateTestResults(fullResults=true) {
 		const results = ["1", "0.5", "0"];
 		//const results = ["1", "0.5", "0", "0-0"];
 
+		let numOfResultRoundsSet = this.data.rounds.length
+		if (!fullResults) {
+			numOfResultRoundsSet = Math.floor(numOfResultRoundsSet/2)
+		}
+
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
-				const random = Math.floor(Math.random() * results.length);
-				this.data.rounds[roundIndex][pairIndex].result = results[random]
+				if (roundIndex < numOfResultRoundsSet) {
+					const random = Math.floor(Math.random() * results.length);
+					this.data.rounds[roundIndex][pairIndex].result = results[random]
+				}
+				else {
+					this.data.rounds[roundIndex][pairIndex].result = '-'
+				}
 			});
 		});
 	
 		this.updateResultsTab();
 	}
 
-	testAll() {
-		this.importDemo(true);
+	demo(evenPlayers=true, fullResults=true) {
+		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
 		this.lockAndPairing();
 
-		this.generateTestResults();
+		this.generateTestResults(fullResults);
 		this.saveToCookie()
 
 		this.openTab('tab3');
+	}
+
+	debugLoadCookie(evenPlayers=true, paired=true) {
+		this.clearAll()
+		this.importDemoPlayers(evenPlayers, true);
+		if (! paired) {
+			this.saveToCookie()
+			// force refresh
+			//window.location.reload()
+			return
+		}
+		this.randomizePlayers();
+		this.lockAndPairing();
+		
+		// force refresh
+		//window.location.reload()
 	}
 
 	async sendFeedback() {
