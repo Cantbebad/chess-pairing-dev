@@ -795,14 +795,8 @@ class Controller {
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
-		let newRow = table.insertRow();
-		let nameCell = newRow.insertCell(0);
-		let EloCell = newRow.insertCell(1);
-		let actionCell = newRow.insertCell(2);
-
-		nameCell.textContent = name;
-		EloCell.textContent = Elo;
-		actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+		
+		this.createRowWithPlayer(table, { 'name': name, 'Elo': Elo })
 
 		// Store in variable
 		this.data.addPlayer(name, Number(Elo))
@@ -840,18 +834,57 @@ class Controller {
 		table.innerHTML = ""; // Clear existing rows
 
 		this.data.players.forEach(player => {
+			this.createRowWithPlayer(table, player)
+		});
+	}
+
+	createRowWithPlayer(table, player) {
 			let newRow = table.insertRow();
 
 			let nameCell = newRow.insertCell(0);
+			nameCell.className = "editablePlayerData"
+
 			let EloCell = newRow.insertCell(1);
+			EloCell.className = "editablePlayerData"
+
 			let actionCell = newRow.insertCell(2);
 
-			nameCell.textContent = player.name;
-			EloCell.textContent = player.Elo;
+			var editableName = document.createElement("input");
+			editableName.type = "text"
+			editableName.className = "editablePlayerData"
+			nameCell.appendChild(editableName)
+
+			editableName.value = player.name
+			editableName.addEventListener("input", 
+				(event) => this.playerNameChanged(event  , this));
+
+			var editableRating = document.createElement("input");
+			editableRating.type = "text"
+			editableRating.className = "editablePlayerData"
+			EloCell.appendChild(editableRating)
+
+			editableRating.value = player.Elo
+			editableRating.addEventListener("input", 
+				(event) => this.playerRatingChanged(event  , this));
+
+			//nameCell.textContent = player.name;
+			//EloCell.textContent = player.Elo;
 			actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
-		});
+	}
+
+	playerNameChanged(event, appObj) {
+		let idx = event.target.parentNode.parentNode.rowIndex - 1
+		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
+		appObj.data.players[idx].name = event.target.value
+		appObj.saveToCookie()
 	}
 	
+	playerRatingChanged(event, appObj) {
+		let idx = event.target.parentNode.parentNode.rowIndex - 1
+		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
+		appObj.data.players[idx].Elo = event.target.value
+		appObj.saveToCookie()
+	}
 	// ************************************************************
 	// Rounds Tab (also Results)
 	
@@ -876,6 +909,7 @@ class Controller {
 		let html = `
 			<thead>
 				<tr>
+					<th>Board</th>
 					<th>Player 1</th>
 					<th>Player 2</th>
 					<th>Result</th>
@@ -888,6 +922,7 @@ class Controller {
 			let player2Name = this.data.players[pair.player2Idx].name
 			html += `
 					<tr>
+						<td>${index+1}.</td>
 						<td>${player1Name}</td>
 						<td>${player2Name}</td>
 						<td>

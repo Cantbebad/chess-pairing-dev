@@ -117,3 +117,17 @@ footer {
     background-color: white;
     border-top: 2px solid black;
 }
+
+input.editablePlayerData {
+	width: 99%;
+	height: 100%;
+	border: none;
+	font-size: inherit;
+}
+td.editablePlayerData {
+    border: 1px solid black;
+    padding: 0px;
+    text-align: left;
+}
+
+
