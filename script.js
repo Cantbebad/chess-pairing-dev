@@ -617,14 +617,14 @@ class Controller {
 		let players = [
 			{"name": "Magnus", "Elo": 2833},
 			{"name": "Fabiano", "Elo": 2803},
-			{"name": "Hikaru", "Elo": 2802},
-			{"name": "Arjun", "Elo": 2801},
-			{"name": "Gukesh", "Elo": 2777},
+			{"name": "Hikaru ヒカル・ナカムラ", "Elo": 2802},
+			{"name": "Arjun అర్జున్ ఎరిగైసి", "Elo": 2801},
+			{"name": "Gukesh గుకేష్ దొమ్మరాజు", "Elo": 2777},
 			{"name": "Nodirbek", "Elo": 2766},
-			{"name": "Alireza", "Elo": 2760},
-			{"name": "Yi", "Elo": 2755},
-			{"name": "Ian", "Elo": 2754},
-			{"name": "Anand", "Elo": 2750}
+			{"name": "Alireza علیرضا فیروزجا", "Elo": 2760},
+			{"name": "Yi 韦奕", "Elo": 2755},
+			{"name": "Ian Ян Алекса́ндрович Непо́мнящий", "Elo": 2754},
+			{"name": "Anand விசுவநாதன் ஆனந்த்", "Elo": 2750}
 		]
 
 		// user could have added some players manually already
