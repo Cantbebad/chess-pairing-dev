@@ -108,6 +108,41 @@ class Tournament {
 		this.players.splice(idx, 1); // Remove from players array
 		this.saveToCookie()
 	}
+
+	_isSameNamePlayer() {
+		let areSame = false
+		this.players.forEach((player1, idx1) => {
+			this.players.forEach((player2, idx2) => {
+				if (idx1 !== idx2 && player1.name === player2.name) {
+					areSame = true
+				}
+			})
+		})
+		return areSame
+	}
+
+	_isPlayerNameTooLong(name) {
+		// can throw
+		// need bytes length, if utf-8 string
+		return new TextEncoder().encode(name).length > 255
+	}
+
+	checkPlayerNamesBeforeLock() {
+		if (this._isSameNamePlayer()) return "same name"
+		try {
+			if (this.players.some((player =>  { 
+				return this._isPlayerNameTooLong(player.name)
+			}))
+			) {
+				return "too long"	
+			}
+		}
+		catch(e) {
+			console.log(e)
+			return "wrong utf8"
+		}
+		return ""
+	}
 	
 	lookupPlayerIndex(name) {
 	    // return index of requested player
@@ -147,7 +182,7 @@ class Tournament {
 	addByeIfNeeded() {
 	    // Add a "Bye" player if the number of players is odd
 	    if (this.players.length % 2 !== 0) {
-        	this.players.push({ name: "Bye", Elo: 1400 , bye: true});
+        	this.players.push({ name: "Bye", Elo: 0, bye: true});
     	}
 	}
 
@@ -546,18 +581,58 @@ class Controller {
 		document.getElementById("criteria").disabled = true;
 	}
 
+	getPlayerTableRow(idx) {
+		let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+		if (idx > rows.length) return null
+		return rows[idx]
+	}
+
 	lockAndPairing() {
+		// trim player names -> input fields may contain only spaces, 
+		// special utf8 empty chars not considered
+		let toRemove = new Array()
+		this.data.players.forEach((player, index) => {
+			player.name = player.name.trim()
+			if (player.name === "") {
+				toRemove.push(index)
+			}
+		})
+
+		// remove empty fields 
+		toRemove.reverse().forEach(index => {
+			this.removePlayerByRowIdx(index)
+		})
+		
 		if (this.data.players.length < 2) {
-			alert("Not enought players")
+			alert("Not enought players.\n")
 			return
 		}
 
+		let arePlayersDataOk = this.data.checkPlayerNamesBeforeLock()
+		console.log(arePlayersDataOk)
+		switch(arePlayersDataOk) {
+			case "same name": 
+				alert("Players with same name in tournament.\nParticipants will be confused.\nPlease, repair.");
+				return
+			case "too long":
+				alert("Some player name is too long.\n(max:255 bytes, consider single character can have up to 4 bytes)");
+				return
+			case "wrong utf8":
+				alert("Some problem with names.\nDid you copy-paste some data ?");
+				return
+			default:
+				;
+		}
+				
+
+		// TODO: change logic of next questions, probably needs some better UI widgets
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
 				return
 			}
 		}
 		// TODO: confirm final standing criteria before lock
+		// TODO: info about Bye is being added if num of players is odd
 
 		// Update the standings table names (dynamic criteria)
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
@@ -783,23 +858,21 @@ class Controller {
 		let name = document.getElementById("name").value;
 		let Elo = document.getElementById("Elo").value;
 		if (!Elo) {
-			Elo = 1400; // Default Elo value
+			Elo = 0; // Default Elo value, means No rating
 		}
-		if (name && Elo) {
-			this.addPlayerToTable_2(name, Elo)
-		} else {
-			alert("Please enter name.");
-		}
+		// allow empty player added, name and rating can be edited 
+		this.addPlayerToTable_2(name, Elo)
 	}
 
-	addPlayerToTable_2(name, Elo, batch=false) {
-		// check same player name
-		if (this.data.players.some((player) => player.name === name)) {
-			// skip alert silently if in batch mode
-			if (!batch) {
-				alert("Player with same name already in tournament");
+	addPlayerToTable_2(name, Elo, batchMode=false) {
+		// restrictions for players moved to lockAndPairing
+		// check at least same player names here
+		if (!batchMode && name.length !== 0) {
+			// 
+			if (this.data.players.some(player => { return player.name === name })) {
+				alert("Player with same name in tournament")
+				return
 			}
-			return
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
@@ -814,6 +887,7 @@ class Controller {
 		document.getElementById("Elo").value = "";
 	}
 
+	// HTML API
 	removePlayer(button) {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
@@ -821,16 +895,25 @@ class Controller {
 		row.parentNode.removeChild(row); // Remove row from table
 	}
 
+	removePlayerByRowIdx(row) {
+		this.data.removePlayer(row)
+		let tableRow = this.getPlayerTableRow(row)
+		tableRow.remove(row); // Remove row from table
+	}
+
+	// HTML API
 	sortPlayers() {
 		this.data.sortPlayers() // Sort players by Elo in descending order
 		this.updatePlayersTable();
 	}
 
+	// HTML API
 	randomizePlayers() {
 		this.data.randomizePlayers();
 		this.updatePlayersTable();
 	}
 
+	// HTML API
 	clearPlayersTable() {
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
 		table.innerHTML = ""; // Clear all rows
@@ -890,7 +973,7 @@ class Controller {
 	playerRatingChanged(event, appObj) {
 		let idx = event.target.parentNode.parentNode.rowIndex - 1
 		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
-		appObj.data.players[idx].Elo = event.target.value
+		appObj.data.players[idx].Elo = Number(event.target.value)
 		appObj.saveToCookie()
 	}
 	// ************************************************************
