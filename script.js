@@ -610,7 +610,7 @@ class Controller {
 		tabButtons.removeClass('active');
 
 		$(`#${tabId}`).addClass('active');
-		$(`.tab-container .tab[onclick="app.openTab('${tabId}')"]`).addClass('active');
+		$(`.tab-container #head_${tabId}`).addClass('active');
 	}
 
 	importDemo(confirmed = false) {
