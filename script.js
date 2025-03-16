@@ -498,6 +498,7 @@ class Controller {
 		}
 
 		this.clearAll()
+		this.openTab('tab1')
 	}
 
 	clearAll() {
@@ -522,9 +523,8 @@ class Controller {
 		$("#Elo").prop('disabled', false);
 
 		// Enable buttons
-		$('#tab1 .button-container button').each(() => {
-			$(this).prop('disabled', false);
-		});
+		$('#tab1 .button-container button').prop('disabled', false);
+		$('#addBtn').prop('disabled', false)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").removeClass('locked');
@@ -537,9 +537,8 @@ class Controller {
 		$("#Elo").prop('disabled', true);
 
 		// Disable buttons
-		$('#tab1 .button-container button').each(() => {
-			$(this).prop('disabled', true);
-		});
+		$('#tab1 .button-container button').prop('disabled', true);
+		$('#addBtn').prop('disabled', true)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").addClass('locked');
