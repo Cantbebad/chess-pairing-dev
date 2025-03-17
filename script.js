@@ -627,16 +627,16 @@ class Controller {
 
 	importDemo(confirmed = false) {
 		let players = [
-			{"name": "Magnus", "Elo": 2833},
-			{"name": "Fabiano", "Elo": 2803},
-			{"name": "Hikaru", "Elo": 2802},
-			{"name": "Arjun", "Elo": 2801},
-			{"name": "Gukesh", "Elo": 2777},
-			{"name": "Nodirbek", "Elo": 2766},
-			{"name": "Alireza", "Elo": 2760},
-			{"name": "Yi", "Elo": 2755},
-			{"name": "Ian", "Elo": 2754},
-			{"name": "Anand", "Elo": 2750}
+			{"name": "Carlsen, Magnus", "Elo": 2833},
+			{"name": "Caruana, Fabiano", "Elo": 2803},
+			{"name": "Nakamura, Hikaru", "Elo": 2802},
+			{"name": "Erigaisi Arjun", "Elo": 2801},
+			{"name": "Gukesh D", "Elo": 2777},
+			{"name": "Abdusattorov, Nodirbek", "Elo": 2766},
+			{"name": "Firouzja, Alireza", "Elo": 2760},
+			{"name": "Wei, Yi", "Elo": 2755},
+			{"name": "Nepomniachtchi, Ian", "Elo": 2754},
+			{"name": "Viswanathan, Anand", "Elo": 2750}
 		]
 
 		players.forEach(player => {
