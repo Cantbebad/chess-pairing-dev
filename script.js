@@ -887,8 +887,8 @@ class Controller {
 			}
 		}
 
-		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
-		
+		let table = $("#dataTable tbody");
+
 		this.createRowWithPlayer(table, { 'name': name, 'Elo': Elo })
 
 		// Store in variable
@@ -942,37 +942,39 @@ class Controller {
 	}
 
 	createRowWithPlayer(table, player) {
-			let newRow = table.insertRow();
+			let newRow = $("<tr>")
+			let nameCell = $("<td>")
+			let EloCell = $("<td>")
+			let actionCell = $("<td>")
 
-			let nameCell = newRow.insertCell(0);
-			nameCell.className = "editablePlayerData"
+			nameCell.addClass("editablePlayerData")
+			EloCell.addClass("editablePlayerData")
 
-			let EloCell = newRow.insertCell(1);
-			EloCell.className = "editablePlayerData"
+			actionCell.html('<button onclick="app.removePlayer(this)">Remove</button>');
 
-			let actionCell = newRow.insertCell(2);
 
-			var editableName = document.createElement("input");
-			editableName.type = "text"
-			editableName.className = "editablePlayerData"
-			nameCell.appendChild(editableName)
+			var editableName = $("<input>");
+			editableName.attr("type", "text")
+			editableName.addClass("editablePlayerData")
+			nameCell.append(editableName)
 
-			editableName.value = player.name
-			editableName.addEventListener("input", 
-				(event) => this.playerNameChanged(event  , this));
+			editableName.val(player.name)
+			editableName.on("input", 
+				function(event) { app.playerNameChanged(event, app) }
+			);
 
-			var editableRating = document.createElement("input");
-			editableRating.type = "text"
-			editableRating.className = "editablePlayerData"
-			EloCell.appendChild(editableRating)
+			var editableRating = $("<input>");
+			editableRating.attr("type", "text")
+			editableRating.addClass("editablePlayerData")
+			EloCell.append(editableRating)
 
-			editableRating.value = player.Elo
-			editableRating.addEventListener("input", 
-				(event) => this.playerRatingChanged(event  , this));
+			editableRating.val(player.Elo)
+			editableRating.on("input", 
+				function (event) { app.playerRatingChanged(event, app) }
+			);
 
-			//nameCell.textContent = player.name;
-			//EloCell.textContent = player.Elo;
-			actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+			newRow.append(nameCell, EloCell, actionCell)
+			table.append(newRow)
 	}
 
 	playerNameChanged(event, appObj) {
@@ -1069,7 +1071,9 @@ class Controller {
 		// Create the header row
 		//let headerRow = $("<thead>").append($("<tr>"))
 		let headerRow = $("<thead>")
-		headerRow.append($("<th>")); // Empty top-left corner
+		let th_left_top = $("<th>")
+		th_left_top.addClass('th-left-top')
+		headerRow.append(th_left_top); // Empty top-left corner
 
 		this.data.players.forEach(function(player) {
 			let th = null
@@ -1127,8 +1131,8 @@ class Controller {
 			case "1":
 			case "0":
 			case "0.5":
-				cell.text(result);
-				reverseCell.text(invertedResult(result))
+				cell.html(resultToHtml(result));
+				reverseCell.html(resultToHtml(invertedResult(result)))
 				break
 			case "0-0":
 				cell.text("0");
