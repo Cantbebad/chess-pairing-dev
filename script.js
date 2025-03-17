@@ -701,17 +701,19 @@ class Controller {
 	}
 
 	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
+		// Elo rating system was adopted by FIDE in 1970 (wiki)
+		// may be it is possible to calc it backward, I did not try
 		let players = [
-			{"name": "Carlsen, Magnus", "Elo": 2833},
-			{"name": "Caruana, Fabiano", "Elo": 2803},
-			{"name": "Nakamura, Hikaru", "Elo": 2802},
-			{"name": "Erigaisi Arjun", "Elo": 2801},
-			{"name": "Gukesh D", "Elo": 2777},
-			{"name": "Abdusattorov, Nodirbek", "Elo": 2766},
-			{"name": "Firouzja, Alireza", "Elo": 2760},
-			{"name": "Wei, Yi", "Elo": 2755},
-			{"name": "Nepomniachtchi, Ian", "Elo": 2754},
-			{"name": "Viswanathan, Anand", "Elo": 2750}
+			{"name": "Emanuel Lasker", "Elo": 2571},
+			{"name": "Adolf Anderssen", "Elo": 2365},
+			{"name": "Richard Réti", "Elo": 2421},
+			{"name": "Wilhelm Steinitz", "Elo": 2501},
+			{"name": "Paul Morphy", "Elo": 2477},
+			{"name": "Gioachino Greco", "Elo": 2060},
+			{"name": "François Philidor", "Elo": 2151},
+			{"name": "Siegbert Tarrasch", "Elo": 2355},
+			{"name": "Aron Nimzowitsch", "Elo": 2430},
+			{"name": "Frank Marshall", "Elo": 2380}
 		]
 
 		// user could have added some players manually already
@@ -719,7 +721,7 @@ class Controller {
 		// this triggers on [true, false] or [false, true]
 		if ( evenNumOfPlayers !== (playersSoFar % 2 === 0) ) 
 		{
-			players.push({"name": "Wildcard Player 1", "Elo": 2700 })
+			players.push({"name": "Wildcard Player", "Elo": 2300 })
 		}
 
 		players.forEach(player => {
