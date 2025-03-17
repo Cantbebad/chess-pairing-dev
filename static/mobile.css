@@ -228,5 +228,9 @@ footer {
 	margin-right: auto;
 }
 
+p.p-info {
+	font-size: small;
+	text-align: center;
+}
 
 /* } */
