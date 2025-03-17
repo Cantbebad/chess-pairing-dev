@@ -354,6 +354,18 @@ function getCriteriumVisibleName(crit) {
 	}
 }
 
+function resultToHtml(result) {
+	switch(result) {
+		case "0.5":
+			return "&frac12;"
+		case "1":
+		case "0":
+		case "0-0":
+			return result
+		default:
+			return '-'
+	}
+}
 
 function invertedResult(result) {
 	switch(result) {
@@ -862,7 +874,7 @@ class Controller {
 		// Create round tab
 		const roundTab = document.createElement("div");
 		roundTab.className = "round-tab";
-		roundTab.innerText = `Round ${roundNumber}`;
+		roundTab.innerText = `${roundNumber}`;
 		roundTab.onclick = () => this.openRound(roundNumber); // Use captured round number
 		roundTabs.appendChild(roundTab);
 
@@ -895,7 +907,7 @@ class Controller {
 								<option value="-" selected> - </option>
 								<option value="1">1-0</option>
 								<option value="0">0-1</option>
-								<option value="0.5">Draw</option>
+								<option value="0.5">&frac12;-&frac12;</option>
 								<option value="0-0">0-0</option>
 							</select>
 						</td>
@@ -974,8 +986,8 @@ class Controller {
 			case "1":
 			case "0":
 			case "0.5":
-				cell.innerText = result;
-				reverseCell.innerText = invertedResult(result)
+				cell.innerHTML = resultToHtml(result);
+				reverseCell.innerHTML = resultToHtml(invertedResult(result))
 				break
 			case "0-0":
 				cell.innerText = "0";
