@@ -85,9 +85,10 @@
             <button onclick="app.randomizePlayers()">Randomize Players</button>
             <button onclick="app.clearPlayersTable()">Clear Table</button>
             <button onclick="app.exportToCSV()">Save Players</button>
-			<br>
+        </div>
+		<p></p>
+        <div class="button-container">
             <button onclick="app.lockAndPairing()">Lock &amp; Start Pairing</button>
-
         </div>
 		<p></p>
         <table id="dataTable">
@@ -108,6 +109,29 @@
             <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
             <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
         </div>
+		<!-- demo start -->
+		<p class='p-info'>Demos:</p>
+        <div class="button-container">
+            <button onclick="app.demo(true, true)">Full Demo</button>
+            <button onclick="app.demo(true, false)">Half Demo</button>
+            <button onclick="app.importDemoPlayers(true)">Load Demo Players</button>
+        </div>
+		<p></p>
+        <div class="button-container">
+            <button onclick="app.demo(false, true)">Full Demo Odd Num of Players</button>
+            <button onclick="app.demo(false, false)">Half Demo Old Num of Players</button>
+            <button onclick="app.importDemoPlayers(false)">Load Demo Players Odd Num</button>
+		</div>
+		<!-- demo end -->
+		<!-- debug start-->
+		<p class='p-info'>Debug tests:</p>
+        <div class="button-container">
+            <button onclick="app.debugLoadCookie(false,false)">Load Cookie odd not Paired</button>
+            <button onclick="app.debugLoadCookie(true,false)">Load Cookie even not Paired</button>
+            <button onclick="app.debugLoadCookie(false,true)">Load Cookie odd Paired</button>
+            <button onclick="app.debugLoadCookie(true,true)">Load Cookie even Paired</button>
+        </div>
+		<!-- debug end-->
     </div>
 
     <!-- Tab 2: Pairing -->
