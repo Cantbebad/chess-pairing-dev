@@ -389,6 +389,18 @@ function getCriteriumVisibleName(crit) {
 	}
 }
 
+function resultToHtml(result) {
+	switch(result) {
+		case "0.5":
+			return "&frac12;"
+		case "1":
+		case "0":
+		case "0-0":
+			return result
+		default:
+			return '-'
+	}
+}
 
 function invertedResult(result) {
 	switch(result) {
@@ -690,16 +702,16 @@ class Controller {
 
 	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
 		let players = [
-			{"name": "Magnus", "Elo": 2833},
-			{"name": "Fabiano", "Elo": 2803},
-			{"name": "Hikaru", "Elo": 2802},
-			{"name": "Arjun", "Elo": 2801},
-			{"name": "Gukesh", "Elo": 2777},
-			{"name": "Nodirbek", "Elo": 2766},
-			{"name": "Alireza", "Elo": 2760},
-			{"name": "Yi", "Elo": 2755},
-			{"name": "Ian", "Elo": 2754},
-			{"name": "Anand", "Elo": 2750}
+			{"name": "Carlsen, Magnus", "Elo": 2833},
+			{"name": "Caruana, Fabiano", "Elo": 2803},
+			{"name": "Nakamura, Hikaru", "Elo": 2802},
+			{"name": "Erigaisi Arjun", "Elo": 2801},
+			{"name": "Gukesh D", "Elo": 2777},
+			{"name": "Abdusattorov, Nodirbek", "Elo": 2766},
+			{"name": "Firouzja, Alireza", "Elo": 2760},
+			{"name": "Wei, Yi", "Elo": 2755},
+			{"name": "Nepomniachtchi, Ian", "Elo": 2754},
+			{"name": "Viswanathan, Anand", "Elo": 2750}
 		]
 
 		// user could have added some players manually already
@@ -1012,7 +1024,7 @@ class Controller {
 		// Create round tab
 		const roundTab = $("<div>");
 		roundTab.addClass("round-tab")
-		roundTab.text(`Round ${roundNumber}`);
+		roundTab.text(`${roundNumber}`);
 		roundTab.on("click", function () { app.openRound(roundNumber)}); // Use captured round number
 		roundTabs.append(roundTab);
 
@@ -1027,8 +1039,8 @@ class Controller {
 			<thead>
 				<tr>
 					<th>Board</th>
-					<th>Player 1</th>
-					<th>Player 2</th>
+					<th>White Pieces</th>
+					<th>Black Pieces</th>
 					<th>Result</th>
 			</thead>
 			<tbody>`
@@ -1046,7 +1058,7 @@ class Controller {
 								<option value="-" selected> - </option>
 								<option value="1">1-0</option>
 								<option value="0">0-1</option>
-								<option value="0.5">Draw</option>
+								<option value="0.5">&frac12;-&frac12;</option>
 								<option value="0-0">0-0</option>
 							</select>
 						</td>
@@ -1084,7 +1096,9 @@ class Controller {
 		// Create the header row
 		//let headerRow = $("<thead>").append($("<tr>"))
 		let headerRow = $("<thead>")
-		headerRow.append($("<th>")); // Empty top-left corner
+		let th_left_top = $("<th>"a
+		th_left_top.addClass('th-left-top'))
+		headerRow.append($(th_left_top); // Empty top-left corner
 
 		this.data.players.forEach(function(player) {
 			let th = null
@@ -1142,8 +1156,8 @@ class Controller {
 			case "1":
 			case "0":
 			case "0.5":
-				cell.text(result);
-				reverseCell.text(invertedResult(result))
+				cell.text(resultToHtml(result));
+				reverseCell.text(resultToHtml(invertedResult(result)))
 				break
 			case "0-0":
 				cell.text("0");
