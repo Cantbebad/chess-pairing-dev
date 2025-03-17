@@ -888,8 +888,8 @@ class Controller {
 		let html = `
 			<thead>
 				<tr>
-					<th>Player 1</th>
-					<th>Player 2</th>
+					<th>White Pieces</th>
+					<th>Black Pieces</th>
 					<th>Result</th>
 				</tr>
 			</thead>
@@ -942,7 +942,7 @@ class Controller {
 
 		// Create the header row
 		let headerRow = table.insertRow();
-		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
+		headerRow.insertCell().outerHTML = "<th class='th-left-top'></th>"; // Empty top-left corner
 		this.data.players.forEach(player => {
 			let th = document.createElement("th");
 			th.textContent = player.name;
