@@ -156,21 +156,27 @@
     <div id="tab4_5" class="tab-content">
         <section id="settings">
             <h2>Settings</h2>
-            
-		 	<form id="criteriaForm" onchange="app.criteriaChanged(this)">	
-			<label for="criteria">Final standings criteria (after total score):</label>
-			<select id="criteria">
-				<option value="1">Mutual Results, Berger Score, More Wins</option>
-				<option value="2">Mutual Results, Berger Score</option>
-				<option value="3">Berger Score, Mutual Results, More Wins</option>
-				<option value="4">Berger Score, Mutual Results</option>
-				<option value="5">Berger Score</option>
-				<option value="6">None</option>
-			</select>
-			</form>
-            <br>
-            <label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
-            <button id="cookieConsentButton" class="btn" type="button" data-cc="show-preferencesModal">Cookie preferences</button> 
+           
+			<ul>
+				<li class='li-setting'>	
+					<form id="criteriaForm" onchange="app.criteriaChanged(this)">	
+					<label for="criteria">Final standings criteria (after total score):</label>
+					<select id="criteria">
+						<option value="1">Mutual Results, Berger Score, More Wins</option>
+						<option value="2">Mutual Results, Berger Score</option>
+						<option value="3">Berger Score, Mutual Results, More Wins</option>
+						<option value="4">Berger Score, Mutual Results</option>
+						<option value="5">Berger Score</option>
+						<option value="6">None</option>
+					</select>
+					</form>
+				</li>
+				<li class='li-setting'></li>
+				<li class='li-setting'>	
+					<label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
+					<button id="cookieConsentButton" class="btn" type="button" data-cc="show-preferencesModal">Cookie preferences</button> 
+				</li>
+			</ul>
         </section>
     </div>
 
@@ -180,14 +186,15 @@
             <h2>About</h2>
             <p>Our goal is to provide <strong>the simplest website</strong> for chess pairing.</p>  
             <p>It should be no more complicated than a basic calculator;)</p>
-            <br>
+			<p></p>
 			<ul>
-              <li>- No Registration</li>
-              <li>- No Pricing</li>
-              <li>- No Limits</li>
+              <li>No Registration</li>
+              <li>No Pricing</li>
+              <li>No Limits</li>
 			</ul>
             <h2>Leave Your Feedback</h2>
             <textarea id="feedback" rows="4" cols="50"></textarea><br>
+			<p></p>
             <button onclick="app.sendFeedback()">Submit</button><br><br>
                
         </section>

@@ -198,12 +198,17 @@ pointer-events: none;
 }
 
 ul {
-	align: center;
+	display: inline-block;
+	text-align: left;
 }
 
 ul li {
-	list-style: none;
-	/* text-align: left; */
+	/* list-style: none; */
+}
+
+li.li-setting {
+	list-style: none; 
+	padding-bottom: 5px;
 }
 
 hr {
