@@ -99,6 +99,26 @@
                 <!-- Rows will be added here -->
             </tbody>
         </table>
+		<!-- demo start -->
+		<br>
+        <div class="button-container">
+            <button onclick="app.importDemoPlayers(true)">Load Demo Players</button>
+            <button onclick="app.importDemoPlayers(false)">Load Demo Players Odd Num</button>
+            <button onclick="app.demo(true, true)">Full Demo</button>
+            <button onclick="app.demo(true, false)">Half Demo</button>
+            <button onclick="app.demo(false, true)">Odd Num Full Demo</button>
+            <button onclick="app.demo(false, false)">Odd Num Half Demo</button>
+		</div>
+		<!-- demo end -->
+		<!-- debug start-->
+		<br><br>
+        <div class="button-container">
+            <button onclick="app.debugLoadCookie(false,false)">Load Cookie odd not Paired</button>
+            <button onclick="app.debugLoadCookie(true,false)">Load Cookie even not Paired</button>
+            <button onclick="app.debugLoadCookie(false,true)">Load Cookie odd Paired</button>
+            <button onclick="app.debugLoadCookie(true,true)">Load Cookie even Paired</button>
+        </div>
+		<!-- debug end-->
     </div>
 
     <!-- Tab 2: Pairing -->
