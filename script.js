@@ -93,7 +93,7 @@ class Tournament {
 		return Math.floor((Math.random()* 1e10 + 1e10)).toString(16)
 	}
 
-	hasTornamentId() {
+	hasTournamentId() {
 		return this.tournamentInfo.id !== null
 	}
 
@@ -203,7 +203,7 @@ class Tournament {
 			}
 		}
 
-//		console.assert(!this.hasTornamentId())
+//		console.assert(!this.hasTournamentId())
 //		this.tournamentInfo.id = this.generateRandomId()
 //		this.saveToCookie()
 	}
@@ -220,7 +220,7 @@ class Tournament {
 			}
 		}
 
-		console.assert(!this.hasTornamentId())
+		console.assert(!this.hasTournamentId())
 		this.tournamentInfo.id = this.generateRandomId()
 		this.saveToCookie()
 	}
@@ -620,7 +620,6 @@ class Controller {
 		}
 
 		let arePlayersDataOk = this.data.checkPlayerNamesBeforeLock()
-		console.log(arePlayersDataOk)
 		switch(arePlayersDataOk) {
 			case "same name": 
 				alert("Players with same name in tournament.\nParticipants will be confused.\nPlease, repair.");
@@ -742,7 +741,7 @@ class Controller {
 	// save & load
 
 	saveAll() {
-		if (!this.data.hasTornamentId()) {
+		if (!this.data.hasTournamentId()) {
 			// create cookie if there is none (case: pairing was not generated yet)
 			this.data.tournamentInfo.id = this.data.generateRandomId()
 			this.setCookie(this.data.tournamentInfo.id)
@@ -785,7 +784,7 @@ class Controller {
 				const data_loaded = JSON.parse(text); // Parse the JSON content
 
 				
-				if (app_inst.data.hasTornamentId() && app_inst.data.tournamentInfo.id !== data_loaded.tournamentInfo.id) {
+				if (app_inst.data.hasTournamentId() && app_inst.data.tournamentInfo.id !== data_loaded.tournamentInfo.id) {
 					if (!confirm("Data from file are not for current tournament.\nCurrent tournament has id: " 
 						+ app_inst.data.tournamentInfo.id + "\nThis id should be in loaded file name for same tournament.\nReplace ?")) {
 						return;
@@ -981,14 +980,12 @@ class Controller {
 
 	playerNameChanged(event, appObj) {
 		let idx = event.target.parentNode.parentNode.rowIndex - 1
-		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
 		appObj.data.players[idx].name = event.target.value
 		appObj.saveToCookie()
 	}
 	
 	playerRatingChanged(event, appObj) {
 		let idx = event.target.parentNode.parentNode.rowIndex - 1
-		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
 		appObj.data.players[idx].Elo = Number(event.target.value)
 		appObj.saveToCookie()
 	}
