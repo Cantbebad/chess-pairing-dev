@@ -880,10 +880,16 @@ class Controller {
 	addPlayerToTable_2(name, Elo, batchMode=false) {
 		// restrictions for players moved to lockAndPairing
 		// check at least same player names here
-		if (!batchMode && name.length !== 0) {
+		if (name.length !== 0) {
 			// 
 			if (this.data.players.some(player => { return player.name === name })) {
-				alert("Player with same name in tournament")
+				if (!batchMode) {
+					alert("Player with same name in tournament")
+				}
+				{ // silently skip in batch mode
+					// if gui will be able to show some time-restricted info, msg can be shown here
+					;
+				}
 				return
 			}
 		}
