@@ -1084,8 +1084,11 @@ class Controller {
 		this.data.players.forEach(function(player) {
 			let th = null
 			th = $("<th>");
+			// fix safari on mobile
+			let span = $("<span>")
 			//th.css({ "writing-mode" : "vertical-rl", "text-orientation" : "mixed" })
-			th.text(player.name);
+			span.text(player.name);
+			th.append(span)
 			headerRow.append(th);
 		});
 
