@@ -137,7 +137,9 @@ pointer-events: none;
 #tab3 th {
     background-color: white;
 	writing-mode: vertical-rl;
+	-webkit-writing-mode: vertical-rl;
 	text-orientation: mixed;
+	-webkit-text-orientation: mixed;
 }
 
 #tab3 th.th-left-top {
