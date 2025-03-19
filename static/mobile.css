@@ -138,6 +138,7 @@ pointer-events: none;
     background-color: white;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
+	width: fit-content;
 }
 
 #tab3 th span {
