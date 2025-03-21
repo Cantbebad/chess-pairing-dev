@@ -123,6 +123,7 @@ pointer-events: none;
 	align-items: center;
 	justify-content: center;
 	font-size: x-large;
+	color: black;
 }
 .round-tab.active {
     /* background-color: WhiteSmoke; */
@@ -138,6 +139,11 @@ pointer-events: none;
 }
 .round-content.active {
     display: block;
+}
+
+#tab2 tbody tr:nth-child(odd) {
+  background-color: DarkSlateBlue;
+  color: WhiteSmoke; 
 }
 
 /* Apply fixed width ONLY to the table inside tab3 */
@@ -160,6 +166,13 @@ pointer-events: none;
     background-color: black;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
+	width: fit-content;
+}
+
+#tab3 th span {
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	padding-inline: inherit;
 }
 
 #tab3 th.th-left-top {
@@ -190,19 +203,6 @@ pointer-events: none;
   color: WhiteSmoke; 
 }
 
-/*
-#tab3 tbody tr td:nth-of-type(even) {
-  background-color: #0C00F5;
-  color: #fff; 
-}
-*/
-
-/*
-#tab3 tbody tr:nth-child(even) {
-  background-color: ;
-  color: #fff;
-}
-*/
 
 /* Apply fixed width ONLY to the table inside tab4 */
 
