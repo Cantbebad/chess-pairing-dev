@@ -128,7 +128,7 @@ pointer-events: none;
     border-collapse: collapse;
     /* width: 100%; */
     margin: 8px auto;
-    /* table-layout: fixed; /* Ensures uniform column width */ 
+    table-layout: auto;
 }
 
 #tab3 th, #tab3 td {
