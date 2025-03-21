@@ -142,9 +142,10 @@ pointer-events: none;
 }
 
 #tab3 th span {
-    background-color: white;
+    /*background-color: white;*/
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
+	padding-inline: inherit;
 }
 
 #tab3 th.th-left-top {
