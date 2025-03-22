@@ -132,14 +132,14 @@ export class FeatPersistentCookie {
 
 				// add mising fields from later versions:
 				// TODO
-				res.TournamentInfo.wasPairingGenerated = !!res.results.length
+				res.tournamentInfo.wasPairingGenerated = !!res.results.length
 
 				return res
 			}
 			case 2: {
-				return deserialize_tournament_data_v2(data)
+				return deserialize_tournament_data_v2(arr)
 			}
-			case default: {
+			default: {
 				throw new Error("unknown data version: " + data_version)
 			}
 		}

@@ -1,5 +1,6 @@
 // brx 2025
 
+import { DullSerializer } from './DullSerializer.js'
 import { parseSchemaSet, parseSchemaGet } from './DataSchema.js' 
 import { remap_properties } from './RemapProps.js'
 
@@ -44,7 +45,7 @@ const tournament_data_schema_v2 = [
 const remap_table = [
 	[ 'tournamentInfo.werePlayersRandomized', 'werePlayersRandomized' ],
 	[ 'tournamentInfo.wasPairingGenerated',  'wasPairingGenerated'],
-	[ 'tournamentInfo.double_rounded', 'data.double_rounded']
+	[ 'tournamentInfo.double_rounded', 'double_rounded']
 ]
 
 
@@ -53,7 +54,7 @@ function prepare_data(data) {
 	let prep = structuredClone(data)
 	prep.data_version = 2
 	// move bools for BitStream
-	remap_props(data, prep, remap_table, false, true)
+	remap_properties(data, prep, remap_table, false, true)
 	/*
 	prep.double_rounded = data.tournamentInfo.double_rounded
 	prep.werePlayersRandomized = data.tournamentInfo.werePlayersRandomized
@@ -71,7 +72,7 @@ function finalize_data(data) {
 	let prep = data
 	delete prep.data_version
 	// move bools back
-	remap_props(prep, data, remap_table, true /*reverse*/, true)
+	remap_properties(prep, data, remap_table, true /*reverse*/, true)
 	/*
 	prep.tournamentInfo.werePlayersRandomized = data.werePlayersRandomized
 	prep.tournamentInfo.wasPairingGenerated = data.wasPairingGenerated
@@ -88,24 +89,36 @@ function finalize_data(data) {
 
 // data from Controller->data (that is class Tournament)
 export function serialize_tournament_data_v2(data) {
-	const prep = prepare_data(data)
-	
-	let arr = new Array()
-	let ds = new DullSerializer()
+	try {
+		const prep = prepare_data(data)
+		
+		let arr = new Array()
+		let ds = new DullSerializer()
 
-	parseSchemaSet(ds, arr, tournament_data_schema_v2, prep)
+		parseSchemaSet(ds, arr, tournament_data_schema_v2, prep)
 
-	return arr
+		return arr
+	}
+	catch(e) {
+		console.error("serialize tournament data v2 failed")
+		throw e
+	}
 }
 
 export function deserialize_tournament_data_v2(arr) {
+	try {
+		let arr_idx = { val : 0 }
+		let ds = new DullSerializer()
+		let ret = {}
+		parseSchemaGet(ds, arr, arr_idx, tournament_data_schema_v2, ret) 
 
-	let idx = { val : 0 }
-	let ds = new DullSerializer()
-	let ret = {}
-	parseSchemaGet(ds, arr, idx, tournament_data_schema_v2, ret) 
-
-	return finalize_data(ret)
+		return finalize_data(ret)
+	}
+	catch(e) {
+		console.error("deserialize tournament data v2 failed")
+		console.error(e.stack)
+		throw e
+	}
 }
 
 

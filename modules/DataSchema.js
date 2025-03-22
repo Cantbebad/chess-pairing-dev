@@ -12,14 +12,20 @@ let DullSerializerDataTypes = {
 	'bool' : [ (ds, arr, idx) => { return ds.readBool(arr, idx) } ,
 					(ds, arr, val) => { ds.appendBool(arr, val) } ] ,
 	'str8' : [ (ds, arr, idx) => { 
+						return ds.readString8(arr, idx)
+						/*
 						let size = ds.readInt8(arr, idx)
 						const bytes = ds.readBytes(arr, idx, size)
 						return ds.byteArrayToUtf8(bytes)
+						*/
 					},
 			   (ds, arr, val) => { 
+				   ds.appendString8(arr, val)
+				   /*
 				  let bytes = ds.utf8ToByteArray(val)
 				  ds.appendInt8(arr, bytes.length)
 				  ds.appendBytes(arr, bytes)
+				  */
 			  }],
 
 	/* implemented in parser (differently, no bytes size)
