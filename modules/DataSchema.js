@@ -13,34 +13,11 @@ let DullSerializerDataTypes = {
 					(ds, arr, val) => { ds.appendBool(arr, val) } ] ,
 	'str8' : [ (ds, arr, idx) => { 
 						return ds.readString8(arr, idx)
-						/*
-						let size = ds.readInt8(arr, idx)
-						const bytes = ds.readBytes(arr, idx, size)
-						return ds.byteArrayToUtf8(bytes)
-						*/
 					},
 			   (ds, arr, val) => { 
 				   ds.appendString8(arr, val)
-				   /*
-				  let bytes = ds.utf8ToByteArray(val)
-				  ds.appendInt8(arr, bytes.length)
-				  ds.appendBytes(arr, bytes)
-				  */
 			  }],
-
-	/* implemented in parser (differently, no bytes size)
-	'bitstream16' : [ (ds, arr, idx) => { 
-						let size = ds.readInt16(arr, idx)
-						return ds.readBytes(arr, idx, size)
-					},
-			   (ds, arr, bs) => { 
-				   let bsd = bs.get_stream_data()
-				   ds.appendInt16(arr, bsd.bytes.length) 
-				   ds.appendBytes(arr, bsd.bytes)
-			  }],
-	*/
 }
-
 
 // Note: will not work correctly with array of array
 // Opt: To implement array_of_array
@@ -118,7 +95,6 @@ function parseBitstreamSchemaSet(bs, schema, obj, idx = null) {
 		switch(type) {
 			case 'bs_bool':
 			case 'bs_item':
-				//const getter_fn = BitStreamDataTypes[type][0]
 				const setter_fn = BitStreamDataTypes[type][1]
 
 				if (idx === null) {
@@ -162,16 +138,6 @@ let BitStreamDataTypes = {
 	   		   (bs, item_size, val) => { bs.write(1, !!val) } ],
 	'bs_item' : [ (bs, item_size) => { return bs.read(item_size) } ,
 	   		   (bs, item_size, val) => { bs.write(item_size, val) } ],
-	/*
-	'bs_item_arr16' : [ (bs, item_size, arr_length) => { 
-					return new Array(arr_length).fill(0).forEach((item, idx) =>
-						{ item = bs.read(item_size) }) 
-					},
-					 (bs, item_size, arr) => { 
-						new Array(arr_length).fill(0).forEach((item, idx) =>
-							{ bs.write(item_size) }) 
-					}]
-	*/
 }
 
 // will convert all null str8 to ''
@@ -296,31 +262,23 @@ export function generate_data_schema_from_plain_object(obj, schema_name, out_sch
 	let variables = Object.getOwnPropertyNames(obj)
 	let schema_data = new Array()
 
-//	console.log('variables: ' +  variables)
-
 	if (in_array) {
-		//console.log('HACK variables[0]: ' + variables[0])
 		if (variables[0] !== '0') {
 			// still in array, but object happens
-			//console.log('HACK')
 			in_array = false
 		}
 	}
-	
 	
 	if (in_array) {
 		let item = variables[0]
 		const con = obj[item].constructor.name
 
-		//console.log('in_array con: ' + con)
 		switch(con) {
 			case 'Object':
-				//console.log('object schema name: '+ schema_name)
 				out_schema[schema_name] = []
 				generate_data_schema_from_plain_object(
 					obj[item], schema_name, out_schema)
 				schema_data = out_schema[schema_name]
-				//console.log('debug:  ' + out_schema[schema_name])
 				break
 			case 'String':
 				schema_data.push(["'str8', null", "adjust item size"])
@@ -346,7 +304,6 @@ export function generate_data_schema_from_plain_object(obj, schema_name, out_sch
 			default:
 				schema_data.push(["UNRECOGNIZED",''])
 		}
-		//console.log(item)
 	}
 	else {
 		variables.forEach((item => {
@@ -389,13 +346,10 @@ export function generate_data_schema_from_plain_object(obj, schema_name, out_sch
 		}))
 	}
 
-	//console.log('out schema: ' + out_schema[schema_name])
 	out_schema[schema_name] = schema_data 
-
 }
 
 export function str_schema(out_schema, sections=null) {
-
 	let msg =""
 	let variables = null
 	if (sections !== null) {
@@ -406,9 +360,6 @@ export function str_schema(out_schema, sections=null) {
 	}
 
 	variables.forEach((item => {
-
-		//if (out_schema[item].constructor.name !== 'Object') return
-
 		msg += "const "+ item + " = [\n"
 
 		out_schema[item].forEach((data => {

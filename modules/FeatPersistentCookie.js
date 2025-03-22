@@ -13,6 +13,9 @@ export class FeatPersistentCookie {
 
 	static CURRENT_BITSIZE = 3 // (8 values)
 
+	// -- serialize data version 1 start --
+	// not used now
+	
 	serialize_players(arr, players) {
 		let se = new DullSerializer()
 		let str_arr = new Array()
@@ -35,10 +38,6 @@ export class FeatPersistentCookie {
 
 		let n_players = se.readInt16(arr, idx)
 		let text_size = se.readInt16(arr, idx)
-
-		//console.log("n_players: " + n_players)
-		//console.log("text_size: " + text_size)
-		//console.log(idx)
 
 		let names = new Array(n_players).fill().map((_) => {
 				return se.readString8(arr, idx)
@@ -93,20 +92,9 @@ export class FeatPersistentCookie {
 		return info
 	}
 
-	serialize_tournament_data(data) {
-		/*
-		let se = new DullSerializer()
-		let arr = new Array()
-		
-		let data_version = 1
-		se.appendInt16(arr, data_version)
-		this.serialize_players(arr, data.players)
-		this.serialize_tournamentInfo(arr, data.tournamentInfo)
-		
-		let bitstream = se.int_array_to_bitstream(FeatPersistentCookie.CURRENT_BITSIZE, data.results)
+	// -- serialize data version 1 end --
 
-		se.serialize_bitstream(arr, bitstream)
-		*/
+	serialize_tournament_data(data) {
 
 		// current data version: 2
 		let arr = serialize_tournament_data_v2(data)
@@ -147,18 +135,14 @@ export class FeatPersistentCookie {
 		return null
 	}
 
-
 	saveAll(cookie_name, data_org) {
 		let data = this.serialize_tournament_data(data_org)
 
-	//	console.log("data.length: " + data.length)
 		new CookiesWrapper().save_base64_to_cookie(cookie_name, data)
 	}
 
 	loadAll(cookie_name) {
 		let data = new CookiesWrapper().load_base64_from_cookie(cookie_name)
-
-		// console.log("load all- data: " + data)
 
 		let res = this.deserialize_tournament_data(data)
 
