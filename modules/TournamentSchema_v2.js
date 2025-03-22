@@ -25,7 +25,7 @@ const results_schema_v2 = [
 ]
 
 const bs_container_schema_v2 = [
-	[ 'bs_bool' , 'double_rounded'],
+	[ 'bs_bool' , 'double_rounded'],  // moved
 	[ 'bs_bool' , 'werePlayersRandomized'], // moved
 	[ 'bs_bool' , 'wasPairingGenerated'],  // moved
 	[ 'array16', 'results', results_schema_v2 ]
@@ -42,12 +42,14 @@ function prepare_data(data) {
 	let prep = structuredClone(data)
 	prep.data_version = 2
 	// move bools for BitStream
+	prep.double_rounded = data.tournamentInfo.double_rounded
 	prep.werePlayersRandomized = data.tournamentInfo.werePlayersRandomized
 	prep.wasPairingGenerated = data.tournamentInfo.wasPairingGenerated
 
 	// this is optional
 	delete prep.TournamentInfo.werePlayersRandomized
 	delete prep.TournamentInfo.wasPairingGenerated
+	delete prop.TournamentInfo.double_rounded
 
 	return prep
 }
@@ -58,10 +60,12 @@ function finalize_data(data) {
 	// move bools for BitStream
 	prep.tournamentInfo.werePlayersRandomized = data.werePlayersRandomized
 	prep.tournamentInfo.wasPairingGenerated = data.wasPairingGenerated
+	prep.tournamentInfo.double_rounded = data.double_rounded
 
 	// delete moved properties
 	delete prep.werePlayersRandomized
 	delete prep.wasPairingGenerated
+	delete prep.double_rounded
 
 	return prep
 }

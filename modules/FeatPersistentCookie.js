@@ -4,6 +4,8 @@ import { Base64Binary } from "./Base64Binary.js";
 import { DullSerializer } from './DullSerializer.js'
 import { CookiesWrapper } from './CookiesWrapper.js'
 
+import { serialize_tournament_data_v2,
+	     deserialize_tournament_data_v2 } from './TournamentSchema_v2.js'
 
 export class FeatPersistentCookie {
 	constructor() {
@@ -92,6 +94,7 @@ export class FeatPersistentCookie {
 	}
 
 	serialize_tournament_data(data) {
+		/*
 		let se = new DullSerializer()
 		let arr = new Array()
 		
@@ -103,7 +106,10 @@ export class FeatPersistentCookie {
 		let bitstream = se.int_array_to_bitstream(FeatPersistentCookie.CURRENT_BITSIZE, data.results)
 
 		se.serialize_bitstream(arr, bitstream)
+		*/
 
+		// current data version: 2
+		let arr = serialize_tournament_data_v2(data)
 
 		return base64ArrayBuffer(arr)
 	}
@@ -116,15 +122,26 @@ export class FeatPersistentCookie {
 
 		let data_version = se.readInt16(arr, idx)
 		
-		if (data_version == 1) {
+		switch(data_version) {
+			case 1 : {
 
-			let res = {}
-			res.players = this.deserialize_players(arr, idx)
-			res.tournamentInfo = this.deserialize_tournamentInfo(arr, idx)
-			res.results = se.deserialize_bitstream(arr, idx, FeatPersistentCookie.CURRENT_BITSIZE)
+				let res = {}
+				res.players = this.deserialize_players(arr, idx)
+				res.tournamentInfo = this.deserialize_tournamentInfo(arr, idx)
+				res.results = se.deserialize_bitstream(arr, idx, FeatPersistentCookie.CURRENT_BITSIZE)
 
+				// add mising fields from later versions:
+				// TODO
+				res.TournamentInfo.wasPairingGenerated = !!res.results.length
 
-			return res
+				return res
+			}
+			case 2: {
+				return deserialize_tournament_data_v2(data)
+			}
+			case default: {
+				throw new Error("unknown data version: " + data_version)
+			}
 		}
 
 		return null

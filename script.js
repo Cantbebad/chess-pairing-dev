@@ -53,6 +53,7 @@ class Tournament {
 
 			werePlayersRandomized : false,
 			double_rounded : false,
+			wasPairingGenerated: false,
 			pairing_version : 1,
 
 			// the order is priority
@@ -184,6 +185,7 @@ class Tournament {
 				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
 			}
 		}
+		this.tournamentInfo.wasPairingGenerated = true
 
 		console.assert(!this.hasTornamentId())
 		this.tournamentInfo.id = this.generateRandomId()
@@ -451,7 +453,9 @@ class Controller {
 				data.players = cookie_data.players.map(p => { 
 					return {'name' : p.name, 'Elo' : p.rating} })
 
-				if (cookie_data.results.length) {
+				if (cookie_data.results.length || 
+					cookie_data.tournamentInfo.wasPairingGenerated) {
+
 					this.data.generatePairingsForCookieLoad(data.players.length)
 				}
 
