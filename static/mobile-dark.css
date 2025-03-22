@@ -173,6 +173,7 @@ pointer-events: none;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	padding-inline: inherit;
+	white-space: nowrap;
 }
 
 #tab3 th.th-left-top {
