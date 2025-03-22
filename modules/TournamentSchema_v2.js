@@ -1,4 +1,7 @@
+// brx 2025
+
 import { parseSchemaSet, parseSchemaGet } from './DataSchema.js' 
+import { remap_properties } from './RemapProps.js'
 
 const player_schema_v2 = [
 	[ 'str8', 'name' ],
@@ -38,10 +41,20 @@ const tournament_data_schema_v2 = [
 	[ 'bitstream16', null, bs_container_schema_v2]
 ]
 
+const remap_table = [
+	[ 'tournamentInfo.werePlayersRandomized', 'werePlayersRandomized' ],
+	[ 'tournamentInfo.wasPairingGenerated',  'wasPairingGenerated'],
+	[ 'tournamentInfo.double_rounded', 'data.double_rounded']
+]
+
+
+
 function prepare_data(data) {
 	let prep = structuredClone(data)
 	prep.data_version = 2
 	// move bools for BitStream
+	remap_props(data, prep, remap_table, false, true)
+	/*
 	prep.double_rounded = data.tournamentInfo.double_rounded
 	prep.werePlayersRandomized = data.tournamentInfo.werePlayersRandomized
 	prep.wasPairingGenerated = data.tournamentInfo.wasPairingGenerated
@@ -50,14 +63,16 @@ function prepare_data(data) {
 	delete prep.TournamentInfo.werePlayersRandomized
 	delete prep.TournamentInfo.wasPairingGenerated
 	delete prop.TournamentInfo.double_rounded
-
+	*/
 	return prep
 }
 
 function finalize_data(data) {
 	let prep = data
 	delete prep.data_version
-	// move bools for BitStream
+	// move bools back
+	remap_props(prep, data, remap_table, true /*reverse*/, true)
+	/*
 	prep.tournamentInfo.werePlayersRandomized = data.werePlayersRandomized
 	prep.tournamentInfo.wasPairingGenerated = data.wasPairingGenerated
 	prep.tournamentInfo.double_rounded = data.double_rounded
@@ -66,6 +81,7 @@ function finalize_data(data) {
 	delete prep.werePlayersRandomized
 	delete prep.wasPairingGenerated
 	delete prep.double_rounded
+	*/
 
 	return prep
 }
