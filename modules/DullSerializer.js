@@ -39,6 +39,13 @@ export class DullSerializer {
 		return res
 	}
 
+	 readBool(arr, idx_obj) {
+		let idx = idx_obj.val
+		let res = !!arr[idx]
+		idx_obj.val++
+		return res
+	}
+
 	 readInt8(arr, idx_obj) {
 		let idx = idx_obj.val
 		let res = arr[idx]
@@ -59,6 +66,17 @@ export class DullSerializer {
 		return this.byteArrayToUtf8(this.readBytes(arr, idx_obj, size))
 	}
 
+	appendBytes(arr, bytes) {
+		if (bytes.length) {
+			arr.push(...bytes)
+		}
+	}
+
+	 appendBool(arr, val) {
+		const v = val ? 1 : 0
+		arr.push(v)
+	}
+
 	 appendInt8(arr, val) {
 		arr.push(val%256)
 	}
@@ -71,16 +89,40 @@ export class DullSerializer {
 	appendString8(arr, val) {
 		let enc = this.utf8ToByteArray(val)
 		this.appendInt8(arr, enc.length)
-		if (!enc.length) return
-		arr.push(...enc)
+		if (enc.length) {
+			arr.push(...enc)
+		}
 	}
 
+	 reconstruct_bitstream16(arr, idx) {
+		let bit_length = this.readInt16(arr, idx)
+		let n_values = this.readInt16(arr, idx)
+
+		let bitstream_len = Math.ceil(bit_length/8)
+		let bitstream_bytes = arr.slice(idx.val, idx.val+bitstream_len)
+
+		let bs = new BitStream()
+		bs.set_stream_data({ 
+			'bit_length': bit_length, 
+			'bytes' : bitstream_bytes, 
+			'n_values': n_values
+		})
+
+		idx.val += bitstream_bytes
+		
+		return bs
+	}
+
+	 // to load bitstream, use reconstruct_bitstream16
 	 serialize_bitstream(arr, bitstream) {
+		 // bytes length can by calculated from bit_length
 		this.appendInt16(arr, bitstream.bit_length)
 		this.appendInt16(arr, bitstream.n_values)
 		arr.push(...bitstream.bytes)
 	}
 
+	// TODO: rename to 'deserialize_samesize_bitstream'
+	// keep compatibility with prev version
 	 deserialize_bitstream(arr, idx, item_bitsize) {
 		/* when bitstream contains only same item_bitsize */
 		let bit_length = this.readInt16(arr, idx)
