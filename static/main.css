@@ -1,41 +1,93 @@
+
 /* default color scheme: light */
+:root {
+	--cp-border-color: black; 
+	--cp-border-color-inv: white; 
+    --cp-bg-color: white;
+    --cp-bg-color-inv: black;
+    --cp-bg-color-row-alternative: #6C8BF5;
+    --cp-bg-color-not-selected-item: rgb(210, 210, 210);
+	--cp-color: black;
+	--cp-color-inv: white;
+	--cp-color-fff : #fff;
+	--cp-color-grey: black;
+	--cp-color-disabled: grey;
+	--cp-button-color: black;;
+}
+
+@media (prefers-color-scheme: dark) {
+:root {
+	--cp-border-color: WhiteSmoke; 
+	--cp-border-color-inv: black; 
+    --cp-bg-color: black;
+	--cp-bg-color-inv: WhiteSmoke;
+    --cp-bg-color-row-alternative: DarkSlateBlue;
+    --cp-bg-color-not-selected-item: black;
+	--cp-color: WhiteSmoke;
+	--cp-color-inv: black;
+	--cp-color-fff : WhiteSmoke; /*#fff;*/
+	--cp-color-grey: grey;
+	--cp-color-disabled: grey;
+	--cp-button-color: black;;
+}
+
+} /* media dark scheme end */
 
 body {
     font-family: Arial, sans-serif;
     margin: 8px;
+	background-color: var(--cp-bg-color);
+	color: var(--cp-color);
+}
+
+th, td, footer, ul, li, p, small, select, input, a {
+	color: var(--cp-color);
+}
+footer, p, th, select, input {
+	background-color: var(--cp-bg-color);
+}
+button {
+	color: var(--cp-button-color);
 }
 
 h2, h3 {
+	color: var(--cp-color);
 	text-align: center
 }
+
+th,td {
+	border-color: var(--cp-border-color);
+}
+
 
 .tab-container {
     display: flex;
 	margin: auto;
 	align-items: center;
 	justify-content: safe center;
-	gap: 1%;
-    border-bottom: 1px solid white;
+	gap: 0.1%;
+    border-bottom: 1px solid var(--cp-border-color-inv);
 }
 .tab {
     padding: 4px 4px;
 	display: block;
     cursor: pointer;
-    border: 1px solid white;
+    border: 1px solid var(--cp-border-color-inv);
     border-bottom: none;
-    background-color: rgb(210, 210, 210);
+    background-color: var(--cp-bg-color-not-selected-item);
     /* margin-right: 2px; */
 }
 .tab.active {
-    background-color: white;
-    border-top: 1px solid black;
-    border-left: 1px solid black;
-    border-right: 1px solid black;
+    background-color: var(--cp-bg-color-inv);
+    border-top: 1px solid var(--cp-border-color);
+    border-left: 1px solid var(--cp-border-color);
+    border-right: 1px solid var(--cp-border-color);
+	color: var(--cp-color-inv);
 }
 .tab-content {
     display: none;
     padding: 8px;
-    border: 1px solid white;
+    border: 1px solid var(--cp-border-color-inv);
     margin-top: -1px;
 }
 .tab-content.active {
@@ -48,12 +100,12 @@ table {
     margin-top: 4px;
 }
 th, td {
-    border: 1px solid black;
+    border: 1px solid var(--cp-border-color);
     padding: 3px;
     text-align: left;
 }
 th {
-    background-color: white;
+    background-color: var(--cp-bg-color);
 }
 
 div .add-player-container {
@@ -85,6 +137,21 @@ div .add-player-container {
 opacity: 0.5;
 pointer-events: none;
 }
+table.locked {
+opacity: 0.9;
+pointer-events: none;
+}
+
+table.locked button {
+	color: var(--cp-color-disabled);
+}
+
+/*
+button:disabled {
+	color: var(--cp-color-disabled);
+}
+*/
+
 .round-container {
     margin-top: 8px;
     display: flex;
@@ -95,9 +162,9 @@ pointer-events: none;
 .round-tab {
     padding: 2px 4px;
     cursor: pointer;
-    border: 1px solid white;
+    border: 1px solid var(--cp-border-color-inv);
     border-bottom: none;
-    background-color: rgb(210, 210, 210);
+    background-color: var(--cp-bg-color-not-selected-item);
     margin-right: 2px;
     display: inline-block;
 	align-items: center;
@@ -105,13 +172,13 @@ pointer-events: none;
 	font-size: x-large;
 }
 .round-tab.active {
-    background-color: white;
-    border-top: 1px solid black;
+    background-color: var(--cp-bg-color);
+    border-top: 1px solid var(--cp-border-color);
 }
 .round-content {
     display: none;
     padding: 8px;
-    border: 1px solid white
+    border: 1px solid var(--cp-border-color-inv)
     margin-top: -1px;
 }
 .round-content.active {
@@ -119,8 +186,8 @@ pointer-events: none;
 }
 
 #tab2 tbody tr:nth-child(odd) {
-  background-color: #6C8BF5;
-  color: #fff; 
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-fff); 
 }
 
 /* Apply fixed width ONLY to the table inside tab3 */
@@ -132,7 +199,7 @@ pointer-events: none;
 }
 
 #tab3 th, #tab3 td {
-    border: 1px solid black;
+    border: 1px solid var(--cp-border-color);
     padding: 3px;
     text-align: center;
 	vertical-align: center;
@@ -140,14 +207,14 @@ pointer-events: none;
 }
 
 #tab3 th {
-    background-color: white;
+    background-color: var(--cp-bg-color);
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	width: fit-content;
 }
 
 #tab3 th span {
-    /*background-color: white;*/
+    /*background-color: var(--cp-bg-color);*/
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
 	padding-inline: inherit;
@@ -163,23 +230,23 @@ pointer-events: none;
 }
 
 #tab3 td.empty {
-    /* background-color: white; */
-    background-color: black;
+	background-color: var(--cp-color-grey);
+	color: var(--cp-color-grey);
 }
 
 #tab3 thead th:nth-of-type(odd) {
-  background-color: #6C8BF5;
-  color: #fff; 
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-fff); 
 }
 
 #tab3 tbody tr:nth-child(even) {
-  background-color: #6C8BF5;
-  color: #fff; 
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-fff); 
 }
 
 #tab4 tbody tr:nth-child(odd) {
-  background-color: #6C8BF5;
-  color: #fff; 
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-fff); 
 }
 
 /* Apply fixed width ONLY to the table inside tab4 */
@@ -227,8 +294,8 @@ footer {
     position: relative;
     bottom: 0;
     width: 90%;
-    background-color: white;
-    border-top: 1px solid black;
+    background-color: var(--cp-bg-color);
+    border-top: 1px solid var(--cp-border-color);
 	margin-left: auto;
 	margin-right: auto;
 }
