@@ -709,7 +709,7 @@ class Controller {
 			{"name": "Wilhelm Steinitz", "Elo": 2501},
 			{"name": "Paul Morphy", "Elo": 2477},
 			{"name": "Gioachino Greco", "Elo": 2060},
-			{"name": "François Philidor", "Elo": 2151},
+			{"name": "François-André Danican Philidor", "Elo": 2151},
 			{"name": "Siegbert Tarrasch", "Elo": 2355},
 			{"name": "Aron Nimzowitsch", "Elo": 2430},
 			{"name": "Frank Marshall", "Elo": 2380}
@@ -1084,8 +1084,11 @@ class Controller {
 		this.data.players.forEach(function(player) {
 			let th = null
 			th = $("<th>");
+			// fix safari on mobile
+			let span = $("<span>")
 			//th.css({ "writing-mode" : "vertical-rl", "text-orientation" : "mixed" })
-			th.text(player.name);
+			span.text(player.name);
+			th.append(span)
 			headerRow.append(th);
 		});
 
