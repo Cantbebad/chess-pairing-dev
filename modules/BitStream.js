@@ -4,6 +4,7 @@
 
 "use strict";
 
+// bitstream realloc strategy
 export function realloc_double_size(limit_max_add = 0) {
 	// double size of previus buffer size
 	return (bitstream) => {
@@ -31,12 +32,29 @@ export function realloc_fixed_size(realloc_size) {
 	}
 }
 
+function unsigned_int(val) {
+	// work only in 32(?) bits interval
+	return val >>> 0
+}
+
+export function log2_uni(val) {
+	if (typeof Object(val).valueOf() === 'bigint') {
+		const bigint_as_str = val.toString(2)
+		// returns something like 10101000000000000 (no 'n' included)
+		return bigint_as_str.length
+	}
+	else {
+		return Math.log2(val)
+	}
+}
+
 export class BitStream {
 	/* Naive implementation of BitStream for limited purposes.
-	 * Single write item is limited to byte size boundaries (0-255)
+	 * XXX Single write item is limited to byte size boundaries (0-255)
+	 * Now it supports almost arbitrary bit_size
+	 * If you use bit_size > 53, see implementation details (uses BigInt)
+	 * Return values for bit_size > 53 are in BigInt
 	 * */
-	//
-	// bitstream realloc strategy
 
 	constructor(expected_length_in_bytes=4, realloc_strategy=realloc_double_size()) {
 		if (expected_length_in_bytes<1) throw new Error("Out of range: expected length")
@@ -47,6 +65,7 @@ export class BitStream {
 		this.cur_bit_length = 0
 		this.locked = false
 		this.n_values = 0
+		this.turnOffConsoleWarnings = false // no API, change directly
 		if (this.realloc_strategy == null) {
 			throw new Error("realloc_strategy is null")
 		}
@@ -82,9 +101,88 @@ export class BitStream {
 		}
 	}
 
+	_write_big(bit_size, big_data) {
+		//console.log("_write_big:" + big_data)
+		const isBigInt = typeof Object(big_data).valueOf() === 'bigint'
+		let divider = isBigInt ? BigInt(256) : 256
+		while(bit_size > 8) {
+			//console.log('write: ' + (big_data%256))
+			this.write(8, Number(big_data % divider))
+			bit_size -= 8
+
+			if (isBigInt) { 
+				big_data = big_data/ divider
+			}
+			else {
+				big_data = Math.floor(big_data/ divider)
+			}
+		}
+		if (bit_size) {
+			// this is rest of data [0,256), so conversion is ok
+			this.write(bit_size, Number(big_data))
+		}
+	}
+
+	_read_big(bit_size) {
+		// be careful using bit_size > 53 
+		// if bit_size>53, it returns BigInt
+
+		// using BigInt, else issues with number sign
+		let big_data = BigInt(0)
+		const org_bit_size = bit_size
+		while(bit_size > 8) {
+			let big_data_val = BigInt(this.read(8)) << BigInt(org_bit_size - bit_size)
+
+			//console.log('read: ' + (big_data_val))
+			bit_size -= 8
+			big_data += big_data_val
+		}
+		if (bit_size) {
+			let big_data_val = BigInt(this.read(bit_size)) << BigInt(org_bit_size - bit_size)
+			big_data += big_data_val
+		}
+
+		if (org_bit_size>53) {
+			// leave it as is, that means as BigInt
+			return big_data
+		}
+		// convert number in format 'XXXXn' to 'XXXX'
+		const str_val = "" + big_data
+		return Number(str_val.substring(0,str_val.length))
+	}
+
 	write(bit_size, byte_data) {
-		if (byte_data != (((byte_data<<(8-bit_size))%256)>>(8-bit_size))) {
+		// be careful using bit_size > 53 
+		// see notice in _read_big_data
+
+		// bit_size over 53 still works, however calculation doesn't:
+		// (2**53) !== (2**53-1)   // true
+		// (2**54) === (2**54-1)   // true
+		// use BigInt instead in form BigInt(2) ** BigInt(67) - BigInt(1)
+		// well, this is not meant to be used with BigInt, but it is implemented
+		// and it works
+
+		if (bit_size > 53 && 
+			!this.turnOffConsoleWarnings &&
+			(typeof Object(byte_data).valueOf() != 'bigint')) {
+			console.warn("warning: bit size is over 53, but data type is not bigint. It can lead to unexpected behaviour in calculations, if data value needs more than 53 bits")
+		}
+		//if (bit_size > 53 || bit_size<1) throw new Error("Out of range: bit_size (write)")
+		if (bit_size <= 0) {
 			throw new Error("byte_data needs more bit_size")
+		}
+		if (byte_data < 0) {
+			throw new Error("byte_data must by positive number")
+		}
+		else if (byte_data>0) {
+			if (Math.ceil(log2_uni(byte_data)>bit_size)) {
+				throw new Error("byte_data needs more bit_size")
+			}
+		}
+
+		if (bit_size > 8) {
+			this._write_big(bit_size, byte_data)
+			return
 		}
 
 		if (this.locked) throw new Error("bitstream is locked for write")
@@ -131,7 +229,13 @@ export class BitStream {
 		/* NOTE: read CHANGES (=consumes) bitstream */
 
 		if (!this.locked) throw new Error("bitstream must be locked before read")
-		if (bit_size > 8 || bit_size<0) throw new Error("Out of range: bit_size (read)")
+
+		//if (bit_size > 63 || bit_size<1) throw new Error("Out of range: bit_size (read)")
+
+		if (bit_size > 8) {
+			return this._read_big(bit_size)
+		}
+		
 		let data = this.arr[this.byte_idx]
 		let ret = 0
 		let val = 0

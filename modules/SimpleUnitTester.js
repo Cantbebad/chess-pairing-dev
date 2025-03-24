@@ -53,6 +53,10 @@ export class TestCtx {
 		cmp(v1,v2) ? this.fn_ok() : this.fn_fail()
 	}
 
+	assertNotEq(v1, v2, cmp=(v1, v2) => { return v1 !== v2 } ) {
+		cmp(v1,v2) ? this.fn_ok() : this.fn_fail()
+	}
+
 	execute_catch_exc(test_classes) {
 		return this.execute(test_classes, true)
 	}
