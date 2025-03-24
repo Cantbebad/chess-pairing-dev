@@ -5,7 +5,8 @@
 	--cp-border-color-inv: white; 
     --cp-bg-color: white;
     --cp-bg-color-inv: black;
-    --cp-bg-color-row-alternative: #6C8BF5;
+    --cp-bg-color-row-alternative: #F9EEEE; /*#6C8BF5;*/
+    --cp-color-row-alternative: black;
     --cp-bg-color-not-selected-item: rgb(210, 210, 210);
 	--cp-color: black;
 	--cp-color-inv: white;
@@ -21,7 +22,8 @@
 	--cp-border-color-inv: black; 
     --cp-bg-color: black;
 	--cp-bg-color-inv: WhiteSmoke;
-    --cp-bg-color-row-alternative: DarkSlateBlue;
+    --cp-bg-color-row-alternative: #342f2f;
+    --cp-color-row-alternative: WhiteSmoke;
     --cp-bg-color-not-selected-item: black;
 	--cp-color: WhiteSmoke;
 	--cp-color-inv: black;
@@ -151,6 +153,28 @@ button:disabled {
 	color: var(--cp-color-disabled);
 }
 */
+#td-verify-options {
+	text-align: center;
+	font-weight: bold;
+}
+
+table.table-demo {
+	table-layout: fixed;
+	word-wrap: break-word;	
+}
+table.table-demo th {
+	border-color: var(--cp-border-color-inv);
+}
+
+table.table-demo td {
+	border-color: var(--cp-border-color-inv);
+}
+
+#btn-lock-and-gen, #addBtn {
+	padding: 5px;
+	font-size: large;
+}
+
 
 .round-container {
     margin-top: 8px;
@@ -178,7 +202,7 @@ button:disabled {
 .round-content {
     display: none;
     padding: 8px;
-    border: 1px solid var(--cp-border-color-inv)
+    border: 1px solid var(--cp-border-color-inv);
     margin-top: -1px;
 }
 .round-content.active {
@@ -236,17 +260,17 @@ button:disabled {
 
 #tab3 thead th:nth-of-type(odd) {
   background-color: var(--cp-bg-color-row-alternative);
-  color: var(--cp-color-fff); 
+  color: var(--cp-color-row-alternative); 
 }
 
 #tab3 tbody tr:nth-child(even) {
   background-color: var(--cp-bg-color-row-alternative);
-  color: var(--cp-color-fff); 
+  color: var(--cp-color-row-alternative); 
 }
 
 #tab4 tbody tr:nth-child(odd) {
   background-color: var(--cp-bg-color-row-alternative);
-  color: var(--cp-color-fff); 
+  color: var(--cp-color-row-alternative); 
 }
 
 /* Apply fixed width ONLY to the table inside tab4 */

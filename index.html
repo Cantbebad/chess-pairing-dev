@@ -59,9 +59,10 @@
 </head>
 
 <body>
+	<h2 id='h2-title'>Round-Robin Pairing System for Chess Tournaments</h2>
     <!-- Tabs -->
     <div class="tab-container">
-        <div class="tab active" id="head_tab1" onclick="app.openTab('tab1')">Players</div>
+        <div class="tab active" id="head_tab1" onclick="app.openTab('tab1')">Prepare</div>
         <div class="tab" id="head_tab2" onclick="app.openTab('tab2')">Pairing</div>
         <div class="tab" id="head_tab3" onclick="app.openTab('tab3')">Crosstable</div>
         <div class="tab" id="head_tab4" onclick="app.openTab('tab4')">Standing</div>
@@ -71,29 +72,60 @@
 
     <!-- Tab 1: Add Player to Table -->
     <div id="tab1" class="tab-content active">
-        <h2>Add Player to Table</h2>
+        <h2>Prepare Tournament</h2>
+		<table class='table-demo'>
+			<thead><tr><th colspan="2">1. (this is optional)</td></tr></thead>
+			<tbody>
+			<tr>
+				<td>Tournament title:</td>
+				<td><input id="inp-title" type="edit"></input></td>
+			</tr><tr>
+				<td>Date:</td>
+				<td><input id="inp-date" type="edit"></input></td>
+			</tr><tr>
+				<td>Place:</td>
+				<td><input id="inp-place" type="edit"></input></td>
+			</tr>
+			</tr><tr>
+				<td colspan="2" id="td-verify-options">2. verify options:</td>
+			</tr><tr>
+				<td>Final standings criteria (after total score):</td>
+				<td>
+					<form id="criteriaForm" onchange="app.criteriaChanged(this)">	
+					<select id="criteria">
+						<option value="1">Mutual Results, Berger Score, More Wins</option>
+						<option value="2">Mutual Results, Berger Score</option>
+						<option value="3">Berger Score, Mutual Results, More Wins</option>
+						<option value="4">Berger Score, Mutual Results</option>
+						<option value="5">Berger Score</option>
+						<option value="6">None</option>
+					</select>
+					</form>
+				</td>
+			</tr><tr>
+				<td>Double rounded:</td>
+				<td><input id="inp-double-rounded" type="checkbox"</input></td>
+			</tr>
+			</tr><tr>
+				<td>Random shuffle order of players:</td>
+				<td><input id="inp-auto-shuffle" type="checkbox" checked></input></td>
+			</tr>
+		</tbody></table>
+		<p></p>
 		<div class="add-player-container">
 			<input type="text" id="name" placeholder="Enter name" required>
-			<input type="number" id="Elo" placeholder="Enter Elo" required>
-        	<button id='addBtn' onclick="app.addPlayerToTable()">Add</button>
+			<input type="number" id="Elo" placeholder="Enter rating" required>
 		</div>
 		<p></p>
         <div class="button-container">
-            <button onclick="app.sortPlayers()">Sort Players</button>
-            <button onclick="app.randomizePlayers()">Randomize Players</button>
-            <button onclick="app.clearPlayersTable()">Clear Table</button>
-            <button onclick="app.exportToCSV()">Save Players</button>
-        </div>
-		<p></p>
-        <div class="button-container">
-            <button onclick="app.lockAndPairing()">Lock &amp; Start Pairing</button>
-        </div>
+        	<button id='addBtn' onclick="app.addPlayerToTable()">3. Add Player</button>
+		</div>
 		<p></p>
         <table id="dataTable">
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Elo</th>
+                    <th>Rating</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -102,25 +134,49 @@
             </tbody>
         </table>
 		<p></p>
+		<div class="button-container">
+            <button id='btn-lock-and-gen' onclick="app.lockAndPairing()">4. Lock Data &amp; Generate Pairing</button> 
+		</div> 
+		<p></p>
+		<hr>
+		<p></p>
         <div class="button-container">
+            <button onclick="app.clearPlayersTable()">Clear List of Players</button>
             <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
-            <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
-        </div>
-		<!-- demo start -->
-		<p class='p-info'>Demos:</p>
-        <div class="button-container">
-            <button onclick="app.demo(true, true)">Full Demo</button>
-            <button onclick="app.demo(true, false)">Half Demo</button>
-            <button onclick="app.importDemoPlayers(true)">Load Demo Players</button>
+            <button onclick="document.getElementById('csvFileInput').click()">Load Players From File</button>
         </div>
 		<p></p>
         <div class="button-container">
-            <button onclick="app.demo(false, true)">Full Demo Odd Num of Players</button>
-            <button onclick="app.demo(false, false)">Half Demo Old Num of Players</button>
-            <button onclick="app.importDemoPlayers(false)">Load Demo Players Odd Num</button>
-		</div>
+            <button onclick="app.sortPlayers()">Sort Players by Rating</button>
+            <button onclick="app.randomizePlayers()">Shuffle Order of Players</button>
+            <button onclick="app.exportToCSV()">Save Players to File</button>
+        </div>
+		<p></p>
+
+		<p></p>
+        <div class="button-container">
+        </div>
+		<!-- demo start -->
+        <div class="button-container">
+			<table class='table-demo'>
+				<thead><tr><th colspan="4">Demos:</td></tr></thead>
+				<tbody>
+				<tr>
+			<td>Even number of players:</td>
+			<td><button onclick="app.demo(true, true)">Full Demo</button></td>
+			<td><button onclick="app.demo(true, false)">Half Demo</button></td>
+			<td><button onclick="app.importDemoPlayers(true)">Generate Demo Players Only</button></td>
+				</tr><tr>
+			<td>Odd number of players:</td>
+			<td><button onclick="app.demo(false, true)">Full Demo</button></td>
+			<td><button onclick="app.demo(false, false)">Half Demo</button></td>
+			<td><button onclick="app.importDemoPlayers(false)">Generate Demo Players Only</button></td>
+			</tr>
+				</tbody></table>
+        </div>
 		<!-- demo end -->
 		<!-- debug start-->
+		<!--
 		<p class='p-info'>Debug tests:</p>
         <div class="button-container">
             <button onclick="app.debugLoadCookie(false,false)">Load Cookie odd not Paired</button>
@@ -128,6 +184,7 @@
             <button onclick="app.debugLoadCookie(false,true)">Load Cookie odd Paired</button>
             <button onclick="app.debugLoadCookie(true,true)">Load Cookie even Paired</button>
         </div>
+		-->
 		<!-- debug end-->
     </div>
 
@@ -180,19 +237,6 @@
             <h2>Settings</h2>
            
 			<ul>
-				<li class='li-setting'>	
-					<form id="criteriaForm" onchange="app.criteriaChanged(this)">	
-					<label for="criteria">Final standings criteria (after total score):</label>
-					<select id="criteria">
-						<option value="1">Mutual Results, Berger Score, More Wins</option>
-						<option value="2">Mutual Results, Berger Score</option>
-						<option value="3">Berger Score, Mutual Results, More Wins</option>
-						<option value="4">Berger Score, Mutual Results</option>
-						<option value="5">Berger Score</option>
-						<option value="6">None</option>
-					</select>
-					</form>
-				</li>
 				<li class='li-setting'></li>
 				<li class='li-setting'>	
 					<label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
