@@ -37,7 +37,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    margin: 8px;
+    margin: 1em;
 	background-color: var(--cp-bg-color);
 	color: var(--cp-color);
 }
@@ -61,6 +61,34 @@ th,td {
 	border-color: var(--cp-border-color);
 }
 
+div .empty-line {
+	display: block;
+	height: 1em;
+	width: 100%;
+}
+
+div .info-line {
+	display: block;
+	height: 1em;
+	font-weight: bold;
+	text-align: center;
+}
+
+input, select, button {
+	font-size: 1em;
+}
+
+.pairing-not-generated {
+	display: none;
+	text-align: center;
+}
+
+.pairing-not-generated .show {
+	display: block;
+	height: 1em;
+	margin: 1em;
+	text-align: center;
+}
 
 .tab-container {
     display: flex;
