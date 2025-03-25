@@ -16,6 +16,14 @@ function getCriteriumVisibleName(crit) {
 	}
 }
 
+function debugGetCallingStack() {
+	try {
+		throw new Error("")
+	}
+	catch(e) {
+		console.log(e.stack)
+	}
+}
 
 // ************************************************************
 
@@ -47,12 +55,18 @@ class Controller {
 		}
 		this.loadFromCookie()
 
-		if (this.data.tournamentInfo.wasPairingGenerated) {
+		if (this.wasPairingGenerated()) {
 			$(".pairing-not-generated").removeClass("show")
 		} else {
 			$(".pairing-not-generated").addClass("show")
 		}
 		this.checkPlayerTableLastField();
+	}
+
+	wasPairingGenerated() {
+		console.assert(typeof this.data.tournamentInfo.wasPairingGenerated !==
+			'undefined')
+		return this.data.tournamentInfo.wasPairingGenerated
 	}
 
 	loadFromCookie() {
@@ -63,6 +77,12 @@ class Controller {
 			let cookie_data = this.data.cookieStorage.loadAll('trndata')
 			if (cookie_data !== null) {
 				let data = {}
+
+				// recreate tournament inf
+				data.tournamentInfo = this.data.createTournamentInfo()
+				// TODO: should merge
+				data.tournamentInfo = cookie_data.tournamentInfo
+
 				// remap 'ratings' to 'Elo'
 				data.players = cookie_data.players.map(p => { 
 					return {'name' : p.name, 'Elo' : p.rating} })
@@ -86,11 +106,6 @@ class Controller {
 						idx++
 					})
 				})
-
-				// recreate tournament inf
-				data.tournamentInfo = this.data.createTournamentInfo()
-
-				data.tournamentInfo = cookie_data.tournamentInfo
 
 				this._loadAllPart2(data)
 			}
@@ -152,7 +167,7 @@ class Controller {
 		$("#dataTable").removeClass('locked');
 		$("#criteria").prop('disabled', false);
 
-		this.data.tournamentInfo.wasPairingGenerated ?
+		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
 			$(".pairing-not-generated").addClass("show")
 	}
@@ -170,23 +185,26 @@ class Controller {
 		$("#dataTable").addClass('locked');
 		$("#criteria").prop('disabled', true);
 
-		this.data.tournamentInfo.wasPairingGenerated ?
+		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
 			$(".pairing-not-generated").addClass("show")
 	}
 
 	getPlayerTableRow(idx) {
-		let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+		//let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+		let rows = $("#dataTable tbody tr")
+
 		if (idx > rows.length) return null
 		return rows[idx]
 	}
 
 	checkPlayerTableLastField() {
-		if (!this.data.tournamentInfo.wasPairingGenerated &&
-			!this.data.players.length ||
-			
-			this.data.players[this.data.players.length-1].name !== '') {
-			this.addPlayerToTable_2('', 0)
+		if (!this.wasPairingGenerated() &&
+			(!this.data.players.length ||
+			this.data.players[this.data.players.length-1].name !== '')
+		) {
+				//debugGetCallingStack()
+				this.addPlayerToTable_2('', 0)
 		}
 	}
 
@@ -197,7 +215,7 @@ class Controller {
 		}
 	}
 
-	_lockAndPairing() {
+	removeEmptyFieldsFromPlayersTable() {
 		// trim player names -> input fields may contain only spaces, 
 		// special utf8 empty chars not considered
 		let toRemove = new Array()
@@ -212,6 +230,10 @@ class Controller {
 		toRemove.reverse().forEach(index => {
 			this.removePlayerByRowIdx(index, false)
 		})
+	}
+
+	_lockAndPairing() {
+		this.removeEmptyFieldsFromPlayersTable()
 		
 		if (this.data.players.length < 2) {
 			alert("Not enought players.\n")
@@ -287,7 +309,7 @@ class Controller {
 
 	openTab(tabId) {
 		if (tabId === "tab4") {
-			if (this.data.tournamentInfo.wasPairingGenerated) {
+			if (this.wasPairingGenerated()) {
 				this.calculateStandings();
 			}
 		}
@@ -323,7 +345,7 @@ class Controller {
 		// this triggers on [true, false] or [false, true]
 		if ( evenNumOfPlayers !== (playersSoFar % 2 === 0) ) 
 		{
-			players.push({"name": "Wildcard Player", "Elo": 2300 })
+			players.push({"name": "Wildcard Player 1", "Elo": 2300 })
 		}
 
 		players.forEach(player => {
@@ -404,19 +426,19 @@ class Controller {
 
 	_loadAllPart2(data_loaded) {
 		// Apply all data to DOM	
+		this.data.players = data_loaded.players;
+		this.data.rounds = data_loaded.rounds;
+		this.data.tournamentInfo = data_loaded.tournamentInfo;
+	
+		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
 
-		this.data.tournamentInfo.wasPairingGenerated ?
+		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
 			$(".pairing-not-generated").addClass("show")
 
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
 
-		this.data.players = data_loaded.players;
-		this.data.rounds = data_loaded.rounds;
-		this.data.tournamentInfo = data_loaded.tournamentInfo;
-	
-		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Update the standings table names
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
@@ -472,18 +494,6 @@ class Controller {
 	// ************************************************************
 	// Players Tab(le)
 
-	// HTML API
-	addPlayerToTable() {
-		// Add player & ELO to the table
-		let name = $("#name").val();
-		let Elo = $("#Elo").val();
-		if (!Elo) {
-			Elo = 0; // Default Elo value, means No rating
-		}
-		// allow empty player added, name and rating can be edited 
-		this.addPlayerToTable_2(name, Elo)
-	}
-
 	addPlayerToTable_2(name, Elo, batchMode=false) {
 		// restrictions for players moved to lockAndPairing
 		// check at least same player names here
@@ -507,10 +517,6 @@ class Controller {
 
 		// Store in variable
 		this.data.addPlayer(name, Number(Elo))
-
-		// Clear input fields
-		$("#name").val("");
-		$("#Elo").val("");
 	}
 
 	// HTML API
@@ -553,7 +559,7 @@ class Controller {
 	removePlayerByRowIdx(row, sanitize=true) {
 		this.data.removePlayer(row)
 		let tableRow = this.getPlayerTableRow(row)
-		tableRow.remove(row); // Remove row from table
+		tableRow.remove(); // Remove row from table
 
 		if (sanitize) {
 			this.checkPlayerTableLastField()
@@ -652,7 +658,7 @@ class Controller {
 
 		// if this is last row, add one empty row at end 
 		if (idx === event.target.parentNode.parentNode.parentNode.childNodes.length - 1) {
-			appObj.addPlayerToTable_2('',0)
+			appObj.checkPlayerTableLastField()
 		}
 
 		appObj.saveToCookie()
@@ -668,7 +674,7 @@ class Controller {
 	// Rounds Tab (also Results)
 	
 	createRoundTab(roundNumber) {
-		if (!this.data.tournamentInfo.wasPairingGenerated) return
+		if (!this.wasPairingGenerated()) return
 		const roundTabs = $("#roundTabs");
 		const roundContents = $("#roundContents");
 
@@ -741,7 +747,7 @@ class Controller {
 
 	// TODO: crosstable sorted by standing (a little bit tricky to code)
 	generateCrossTable() {
-		if (!this.data.tournamentInfo.wasPairingGenerated) return
+		if (!this.wasPairingGenerated()) return
 
 		let table = $("#crossTable");
 		table.html(""); // Clear existing rows
@@ -793,7 +799,7 @@ class Controller {
 	}
 
 	updateCrosstable(resultRow) {
-		if (!this.data.tournamentInfo.wasPairingGenerated) return
+		if (!this.wasPairingGenerated()) return
 		let result = resultRow.result
 
 		// two coresponding fields in the table are updated
@@ -840,7 +846,7 @@ class Controller {
 
 	// Update the result values based on the loaded rounds data
 	updateResultsTab() {
-		if (!this.data.tournamentInfo.wasPairingGenerated) return
+		if (!this.wasPairingGenerated()) return
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
 				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
@@ -862,7 +868,7 @@ class Controller {
 	}
 	
 	calculateStandings() {
-		if (!this.data.tournamentInfo.wasPairingGenerated) return
+		if (!this.wasPairingGenerated()) return
 		let standings = this.data.calculateStandings()
 
 		// Update the standings table
@@ -893,7 +899,7 @@ class Controller {
 	}
 
 	updateStandingTableNames(criteriaResolvers) {
-		//if (!this.data.tournamentInfo.wasPairingGenerated) return
+		//if (!this.wasPairingGenerated()) return
 
 		// dynamicly adds final standing criteria names to Standing Table
 		let table_th = $("#standingsTable thead");
@@ -1006,6 +1012,7 @@ class Controller {
 	}
 
 	demo(evenPlayers=true, fullResults=true) {
+		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
 		this.lockAndPairing();
@@ -1018,6 +1025,7 @@ class Controller {
 
 	debugLoadCookie(evenPlayers=true, paired=true) {
 		this.clearAll()
+		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		if (! paired) {
 			this.saveToCookie()
