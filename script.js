@@ -156,12 +156,8 @@ class Controller {
 	}
 
 	unlockWidgets() {
-		$("#name").prop('disabled', false);
-		$("#Elo").prop('disabled', false);
-
 		// Enable buttons
 		$('#tab1 .button-container button').prop('disabled', false);
-		$('#addBtn').prop('disabled', false)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").removeClass('locked');
@@ -174,12 +170,9 @@ class Controller {
 
 	lockWidgets() {
 		// Disable input fields
-		$("#name").prop('disabled', true);
-		$("#Elo").prop('disabled', true);
 
 		// Disable buttons
 		$('#tab1 .button-container button').prop('disabled', true);
-		$('#addBtn').prop('disabled', true)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").addClass('locked');
@@ -191,7 +184,6 @@ class Controller {
 	}
 
 	getPlayerTableRow(idx) {
-		//let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 		let rows = $("#dataTable tbody tr")
 
 		if (idx > rows.length) return null
@@ -204,14 +196,7 @@ class Controller {
 			this.data.players[this.data.players.length-1].name !== '')
 		) {
 				//debugGetCallingStack()
-				this.addPlayerToTable_2('', 0)
-		}
-	}
-
-	lockAndPairing() {
-		const res = this._lockAndPairing()
-		if (!res) {
-			this.checkPlayerTableLastField();
+				this.addPlayerToTable('', 0)
 		}
 	}
 
@@ -232,8 +217,35 @@ class Controller {
 		})
 	}
 
+	checkPlayerRatings() {
+		let isOk = true
+		this.data.players.forEach((pl, idx) => {
+			if (isNaN(Number(pl.Elo))) {
+				this.data.players[idx].Elo = 0
+				isOk = false
+			}
+			else {
+				this.data.players[idx].Elo = Number(pl.Elo)
+			}
+		})
+
+		return isOk
+	}
+
+	lockAndPairing() {
+		const isOk = this._lockAndPairing()
+		if (!isOk) {
+			this.checkPlayerTableLastField();
+		}
+		return isOk
+	}
+
 	_lockAndPairing() {
 		this.removeEmptyFieldsFromPlayersTable()
+		if (!this.checkPlayerRatings()) {
+			alert("Same player has wrong rating (not number)\n. Please, check ratings again.");
+			return false
+		}	
 		
 		if (this.data.players.length < 2) {
 			alert("Not enought players.\n")
@@ -350,7 +362,7 @@ class Controller {
 
 		players.forEach(player => {
 			// batch mode
-			this.addPlayerToTable_2(player.name, player.Elo, true);
+			this.addPlayerToTable(player.name, player.Elo, true);
 		})
 		
 		this.updatePlayersTable();
@@ -494,7 +506,7 @@ class Controller {
 	// ************************************************************
 	// Players Tab(le)
 
-	addPlayerToTable_2(name, Elo, batchMode=false) {
+	addPlayerToTable(name, rating, batchMode=false) {
 		// restrictions for players moved to lockAndPairing
 		// check at least same player names here
 		if (name.length !== 0) {
@@ -513,10 +525,15 @@ class Controller {
 
 		let table = $("#dataTable tbody");
 
-		this.createRowWithPlayer(table, { 'name': name, 'Elo': Elo })
+		rating = Number(rating)
+		if (isNaN(rating)) {
+			rating = 0
+		}
+
+		this.createRowWithPlayer(table, { 'name': name, 'Elo': rating })
 
 		// Store in variable
-		this.data.addPlayer(name, Number(Elo))
+		this.data.addPlayer(name, rating)
 	}
 
 	// HTML API
@@ -1015,7 +1032,9 @@ class Controller {
 		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
-		this.lockAndPairing();
+		if (!this.lockAndPairing()) {
+			return
+		}
 
 		this.generateTestResults(fullResults);
 		this.saveToCookie()
