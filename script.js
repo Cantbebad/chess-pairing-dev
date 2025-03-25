@@ -52,9 +52,13 @@ class Tournament {
 			location_ : "", // opt
 
 			werePlayersRandomized : false,
-			double_rounded : false,
+			doubleRounded : false,
 			wasPairingGenerated: false,
-			pairing_version : 1,
+			pairingVersion : 1,
+
+			autoShuffleOrderOfPlayers: true,
+
+			themeNumber: 0,
 
 			// the order is priority
 			finalStandingsResolvers : [
@@ -486,6 +490,13 @@ class Controller {
 			;
 		}
 		this.loadFromCookie()
+
+		if (this.data.tournamentInfo.wasPairingGenerated) {
+			$(".pairing-not-generated").removeClass("show")
+		} else {
+			$(".pairing-not-generated").addClass("show")
+		}
+		this.checkPlayerTableLastField();
 	}
 
 	loadFromCookie() {
@@ -527,7 +538,7 @@ class Controller {
 			}
 		}
 		catch(e) {
-			console.log("This is catched exception. This is not error, if cookie for Tournament data was disabled.\n" + e)
+			console.error(e + "\n" + e.stack)
 		}
 	}
 
@@ -556,13 +567,15 @@ class Controller {
 		// clear all Tournament data
 		this.data = new Tournament()
 
-		this.clearPlayersTable()
+		this.clearPlayersTable(true)
 		this.clearResultsTab()
 		this.clearCrosstableTab()
 		this.clearStandingsTab()
 
 		// set no criteria names in standing table
 		this.updateStandingTableNames([])
+
+		this.checkPlayerTableLastField();
 
 		this.setCookie("")
 		this.unlockWidgets()
@@ -580,6 +593,10 @@ class Controller {
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").removeClass('locked');
 		$("#criteria").prop('disabled', false);
+
+		this.data.tournamentInfo.wasPairingGenerated ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
 	}
 
 	lockWidgets() {
@@ -594,6 +611,10 @@ class Controller {
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").addClass('locked');
 		$("#criteria").prop('disabled', true);
+
+		this.data.tournamentInfo.wasPairingGenerated ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
 	}
 
 	getPlayerTableRow(idx) {
@@ -602,7 +623,23 @@ class Controller {
 		return rows[idx]
 	}
 
+	checkPlayerTableLastField() {
+		if (!this.data.tournamentInfo.wasPairingGenerated &&
+			!this.data.players.length ||
+			
+			this.data.players[this.data.players.length-1].name !== '') {
+			this.addPlayerToTable_2('', 0)
+		}
+	}
+
 	lockAndPairing() {
+		const res = this._lockAndPairing()
+		if (!res) {
+			this.checkPlayerTableLastField();
+		}
+	}
+
+	_lockAndPairing() {
 		// trim player names -> input fields may contain only spaces, 
 		// special utf8 empty chars not considered
 		let toRemove = new Array()
@@ -615,25 +652,25 @@ class Controller {
 
 		// remove empty fields 
 		toRemove.reverse().forEach(index => {
-			this.removePlayerByRowIdx(index)
+			this.removePlayerByRowIdx(index, false)
 		})
 		
 		if (this.data.players.length < 2) {
 			alert("Not enought players.\n")
-			return
+			return false
 		}
 
 		let arePlayersDataOk = this.data.checkPlayerNamesBeforeLock()
 		switch(arePlayersDataOk) {
 			case "same name": 
 				alert("Players with same name in tournament.\nParticipants will be confused.\nPlease, repair.");
-				return
+				return false
 			case "too long":
 				alert("Some player name is too long.\n(max:255 bytes, consider single character can have up to 4 bytes)");
-				return
+				return false
 			case "wrong utf8":
 				alert("Some problem with names.\nDid you copy-paste some data ?");
-				return
+				return false
 			default:
 				;
 		}
@@ -642,7 +679,7 @@ class Controller {
 		// TODO: change logic of next questions, probably needs some better UI widgets
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
-				return
+				return false
 			}
 		}
 		// TODO: confirm final standing criteria before lock
@@ -675,6 +712,8 @@ class Controller {
 		this.openRound(1);
 
 		this.saveToCookie()
+
+		return true
 	}
 
 	openRound(roundNumber) {
@@ -690,7 +729,9 @@ class Controller {
 
 	openTab(tabId) {
 		if (tabId === "tab4") {
-			this.calculateStandings();
+			if (this.data.tournamentInfo.wasPairingGenerated) {
+				this.calculateStandings();
+			}
 		}
 
 		let tabs = $('.tab-content');
@@ -806,6 +847,10 @@ class Controller {
 	_loadAllPart2(data_loaded) {
 		// Apply all data to DOM	
 
+		this.data.tournamentInfo.wasPairingGenerated ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
+
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
 
@@ -911,17 +956,50 @@ class Controller {
 	}
 
 	// HTML API
-	removePlayer(button) {
+	removePlayer(button, appObj) {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
 		this.data.removePlayer(rowIndex)
 		row.parentNode.removeChild(row); // Remove row from table
+
+		appObj.checkPlayerTableLastField()
 	}
 
-	removePlayerByRowIdx(row) {
+	// HTML API
+	moveUpPlayer(button, appObj) {
+		let row = button.parentNode.parentNode;
+		let rowIndex = row.rowIndex - 1; // Adjust for header row
+
+		// TODO
+		console.log("TODO")
+		if (rowIndex > 0) {
+			;
+		}
+
+		appObj.checkPlayerTableLastField()
+	}
+
+	// HTML API
+	moveDownPlayer(button, appObj) {
+		let row = button.parentNode.parentNode;
+		let rowIndex = row.rowIndex - 1; // Adjust for header row
+
+		// TODO
+		console.log("TODO")
+		if (rowIndex < appObj.data.players.length-1) {
+			;
+		}
+
+		appObj.checkPlayerTableLastField()
+	}
+	removePlayerByRowIdx(row, sanitize=true) {
 		this.data.removePlayer(row)
 		let tableRow = this.getPlayerTableRow(row)
 		tableRow.remove(row); // Remove row from table
+
+		if (sanitize) {
+			this.checkPlayerTableLastField()
+		}
 	}
 
 	// HTML API
@@ -936,11 +1014,16 @@ class Controller {
 		this.updatePlayersTable();
 	}
 
-	// HTML API
-	clearPlayersTable() {
+	// HTML API (+ used from app)
+	clearPlayersTable(force=false) {
+		if (!force && 
+			!confirm("Do you really want to remove all players ?")) return
+	
 		let table = $("#dataTable tbody");
 		table.html(""); // Clear all rows
 		this.data.players = []; // Clear players array
+
+		this.checkPlayerTableLastField();
 	}
 	
 	updatePlayersTable() {
@@ -953,6 +1036,7 @@ class Controller {
 	}
 
 	createRowWithPlayer(table, player) {
+			let appInst = this
 			let newRow = $("<tr>")
 			let nameCell = $("<td>")
 			let EloCell = $("<td>")
@@ -961,7 +1045,23 @@ class Controller {
 			nameCell.addClass("editablePlayerData")
 			EloCell.addClass("editablePlayerData")
 
-			actionCell.html('<button onclick="app.removePlayer(this)">Remove</button>');
+			let btnRemove = $("<button>")
+			btnRemove.on("click",
+				function(event) { appInst.removePlayer(this, appInst) })
+			btnRemove.html("Remove")
+
+			let btnMoveUp = $("<button>")
+			btnMoveUp.html("Up")
+			btnMoveUp.on("click",
+				function(event) { appInst.moveUpPlayer(this, appInst) })
+
+			let btnMoveDown = $("<button>")
+			btnMoveDown.html("Down")
+			btnMoveDown.on("click",
+				function(event) { appInst.moveDownPlayer(this, appInst) })
+
+			actionCell.append([btnRemove, btnMoveUp, btnMoveDown])
+//			actionCell.html('<button onclick="app.removePlayer(this)">Remove</button>');
 
 
 			var editableName = $("<input>");
@@ -971,7 +1071,7 @@ class Controller {
 
 			editableName.val(player.name)
 			editableName.on("input", 
-				function(event) { app.playerNameChanged(event, app) }
+				function(event) { appInst.playerNameChanged(event, appInst) }
 			);
 
 			var editableRating = $("<input>");
@@ -981,7 +1081,7 @@ class Controller {
 
 			editableRating.val(player.Elo)
 			editableRating.on("input", 
-				function (event) { app.playerRatingChanged(event, app) }
+				function (event) { appInst.playerRatingChanged(event, appInst) }
 			);
 
 			newRow.append(nameCell, EloCell, actionCell)
@@ -991,7 +1091,14 @@ class Controller {
 	playerNameChanged(event, appObj) {
 		let idx = event.target.parentNode.parentNode.rowIndex - 1
 		appObj.data.players[idx].name = event.target.value
+
+		// if this is last row, add one empty row at end 
+		if (idx === event.target.parentNode.parentNode.parentNode.childNodes.length - 1) {
+			appObj.addPlayerToTable_2('',0)
+		}
+
 		appObj.saveToCookie()
+
 	}
 	
 	playerRatingChanged(event, appObj) {
@@ -1003,6 +1110,7 @@ class Controller {
 	// Rounds Tab (also Results)
 	
 	createRoundTab(roundNumber) {
+		if (!this.data.tournamentInfo.wasPairingGenerated) return
 		const roundTabs = $("#roundTabs");
 		const roundContents = $("#roundContents");
 
@@ -1075,6 +1183,8 @@ class Controller {
 
 	// TODO: crosstable sorted by standing (a little bit tricky to code)
 	generateCrossTable() {
+		if (!this.data.tournamentInfo.wasPairingGenerated) return
+
 		let table = $("#crossTable");
 		table.html(""); // Clear existing rows
 
@@ -1125,6 +1235,7 @@ class Controller {
 	}
 
 	updateCrosstable(resultRow) {
+		if (!this.data.tournamentInfo.wasPairingGenerated) return
 		let result = resultRow.result
 
 		// two coresponding fields in the table are updated
@@ -1169,6 +1280,7 @@ class Controller {
 
 	// Update the result values based on the loaded rounds data
 	updateResultsTab() {
+		if (!this.data.tournamentInfo.wasPairingGenerated) return
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
 				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
@@ -1190,6 +1302,7 @@ class Controller {
 	}
 	
 	calculateStandings() {
+		if (!this.data.tournamentInfo.wasPairingGenerated) return
 		let standings = this.data.calculateStandings()
 
 		// Update the standings table
@@ -1220,6 +1333,8 @@ class Controller {
 	}
 
 	updateStandingTableNames(criteriaResolvers) {
+		//if (!this.data.tournamentInfo.wasPairingGenerated) return
+
 		// dynamicly adds final standing criteria names to Standing Table
 		let table_th = $("#standingsTable thead");
 

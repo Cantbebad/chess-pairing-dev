@@ -83,7 +83,7 @@ input, select, button {
 	text-align: center;
 }
 
-.pairing-not-generated .show {
+.pairing-not-generated.show {
 	display: block;
 	height: 1em;
 	margin: 1em;
