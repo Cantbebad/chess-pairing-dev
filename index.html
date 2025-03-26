@@ -91,13 +91,13 @@
 			<tbody>
 			<tr>
 				<td>Tournament title:</td>
-				<td><input id="inp-title" type="edit"></input></td>
+				<td><input id="inp-title" type="edit" /></td>
 			</tr><tr>
 				<td>Date:</td>
-				<td><input id="inp-date" type="edit"></input></td>
+				<td><input id="inp-date" type="edit" /></td>
 			</tr><tr>
 				<td>Place:</td>
-				<td><input id="inp-place" type="edit"></input></td>
+				<td><input id="inp-place" type="edit" /></td>
 			</tr>
 			</tr><tr>
 				<td colspan="2" id="td-verify-options">2. verify options:</td>
@@ -114,14 +114,15 @@
 						<option value="6">None</option>
 					</select>
 					</form>
+					<button onclick="app.criteriaInfo()">info</button>
 				</td>
 			</tr><tr>
 				<td>Double rounded:</td>
-				<td><input id="inp-double-rounded" type="checkbox"</input></td>
+				<td><input id="inp-double-rounded" type="checkbox" /></td>
 			</tr>
 			</tr><tr>
 				<td>Random shuffle order of players:</td>
-				<td><input id="inp-auto-shuffle" type="checkbox" checked></input></td>
+				<td><input id="inp-auto-shuffle" type="checkbox" /></td>
 			</tr>
 		</tbody></table>
 		<div class="empty-line"></div>
@@ -171,12 +172,12 @@
 			<td>Even number of players:</td>
 			<td><button onclick="app.demo(true, true)">Full Demo</button></td>
 			<td><button onclick="app.demo(true, false)">Half Demo</button></td>
-			<td><button onclick="app.importDemoPlayers(true)">Generate Demo Players Only</button></td>
+			<td><button onclick="app.importDemoPlayers(true)">Add Demo Players Only</button></td>
 				</tr><tr>
 			<td>Odd number of players:</td>
 			<td><button onclick="app.demo(false, true)">Full Demo</button></td>
 			<td><button onclick="app.demo(false, false)">Half Demo</button></td>
-			<td><button onclick="app.importDemoPlayers(false)">Generate Demo Players Only</button></td>
+			<td><button onclick="app.importDemoPlayers(false)">Add Demo Players Only</button></td>
 			</tr>
 				</tbody></table>
         </div>
@@ -206,6 +207,10 @@
         </div>
         <div class="button-container">
             <button onclick="app.saveAll()">Save to File</button>
+		</div>
+		<div class="empty-line"></div>
+		<hr>
+        <div class="button-container">
             <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="app.loadAll(event)">
             <button onclick="document.getElementById('jsonFileInput').click()">Load from File</button>
 			<!-- <button onclick="app.clearResults()">Clear Results</button> -->

@@ -76,38 +76,42 @@ class Controller {
 			}
 			let cookie_data = this.data.cookieStorage.loadAll('trndata')
 			if (cookie_data !== null) {
-				let data = {}
+				let preparedData = {}
 
+				console.log("cookie_data: ")
+				console.log(cookie_data)
 				// recreate tournament inf
-				data.tournamentInfo = this.data.createTournamentInfo()
+				preparedData.tournamentInfo = this.data.createTournamentInfo()
 				// TODO: should merge
-				data.tournamentInfo = cookie_data.tournamentInfo
+				preparedData.tournamentInfo = cookie_data.tournamentInfo
 
 				// remap 'ratings' to 'Elo'
-				data.players = cookie_data.players.map(p => { 
+				preparedData.players = cookie_data.players.map(p => { 
 					return {'name' : p.name, 'Elo' : p.rating} })
 
+				preparedData.rounds = []
 				if (cookie_data.results.length || 
 					cookie_data.tournamentInfo.wasPairingGenerated) {
 
-					this.data.generatePairingsForCookieLoad(data.players.length)
+					preparedData.rounds = this.data.generateCorePairingIdx(
+						cookie_data.players.length, 
+						cookie_data.tournamentInfo.doubleRounded)
 				}
 
 				// recreate results
-				data.rounds = this.data.rounds
-
 				const rc = new ResultConversions()
 
 				let idx = 0
-				data.rounds.forEach((round, round_i) => {
+				preparedData.rounds.forEach((round, round_i) => {
 					round.forEach((resultRecord, rec_i) => {
-						data.rounds[round_i][rec_i].result =
+						preparedData.rounds[round_i][rec_i].result =
 							rc.result_from_save_id(cookie_data.results[idx])
 						idx++
 					})
 				})
 
-				this._loadAllPart2(data)
+				console.log(preparedData)
+				this._loadAllPart2(preparedData)
 			}
 		}
 		catch(e) {
@@ -127,7 +131,7 @@ class Controller {
 
 	newTournament(confirmed = false) {
 		if (!confirmed) {
-			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
+			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nIS IT OK ?")) {
 				return
 			}
 		}
@@ -231,6 +235,37 @@ class Controller {
 
 		return isOk
 	}
+	
+	retrieveOtherTournamentData() {
+		let ti = this.data.tournamentInfo
+		ti.title = $("#inp-title").val()
+		ti.date = $("#inp-date").val()
+		ti.location_ = $("#inp-place").val()
+		ti.doubleRounded = $("#inp-double-rounded").is(':checked')
+		ti.autoShuffleOrderOfPlayers = $("#inp-auto-shuffle").is(':checked')
+	}
+
+	insertOtherTournamentData(opt) {
+		if (opt.title && opt.title.trim() !== '') {
+			$("#inp-title").attr("value", opt.title.trim())
+		}
+
+		if (opt.date && opt.date.trim() !== '') {
+			$("#inp-date").attr("value", opt.date.trim())
+		}
+
+		if (opt.location_ && opt.location_.trim() !== '') {
+			$("#inp-place").attr("value", opt.location_.trim())
+		}
+
+		if (opt.doubleRounded) {
+			$("#inp-double-rounded").prop("checked", opt.doubleRounded)
+		}
+
+		if (opt.autoShuffleOrderOfPlayers) {
+			$("#inp-auto-shuffle").prop("checked", opt.autoShuffleOrderOfPlayers)
+		}
+	}
 
 	lockAndPairing() {
 		const isOk = this._lockAndPairing()
@@ -241,6 +276,7 @@ class Controller {
 	}
 
 	_lockAndPairing() {
+		this.retrieveOtherTournamentData()
 		this.removeEmptyFieldsFromPlayersTable()
 		if (!this.checkPlayerRatings()) {
 			alert("Same player has wrong rating (not number)\n. Please, check ratings again.");
@@ -269,8 +305,10 @@ class Controller {
 				
 
 		// TODO: change logic of next questions, probably needs some better UI widgets
-		if (!this.data.tournamentInfo.werePlayersRandomized) {
-			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
+		if (!this.data.tournamentInfo.autoShuffleOrderOfPlayers &&
+			!this.data.tournamentInfo.werePlayersRandomized) 
+		{
+			if (!confirm("The order of players should be shuffled.\nDo you want to proceed without randomizing the order ?")) {
 				return false
 			}
 		}
@@ -286,7 +324,7 @@ class Controller {
 		this.updatePlayersTable();
 
 		// Generate pairings
-		this.generatePairings("Berger")
+		this.generatePairings()
 
 		// Create tabs for all rounds
 		for (let i = 1; i <= (this.data.rounds.length); i++) {
@@ -368,8 +406,8 @@ class Controller {
 		this.updatePlayersTable();
 	}
 
-	generatePairings(method) {
-		this.data.generatePairings(method)
+	generatePairings() {
+		this.data.generatePairings()
 
 		this.setCookie(this.data.tournamentInfo.id)
 	}
@@ -451,7 +489,6 @@ class Controller {
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
 
-
 		// Update the standings table names
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 
@@ -467,6 +504,15 @@ class Controller {
 		
 		// Update the result values based on the loaded rounds data
 		this.updateResultsTab();
+
+		const ti = this.data.tournamentInfo
+		this.insertOtherTournamentData({
+			'title' : ti.title,
+			'date' : ti.date,
+			'location_': ti.location_,
+			'doubleRounded': ti.doubleRounded,
+			'autoShuffleOrderOfPlayers' : ti.autoShuffleOrderOfPlayers
+		})
 
 		// lock widgets if pairing was generated
 		if (this.data.rounds.length) {
@@ -573,6 +619,7 @@ class Controller {
 
 		appObj.checkPlayerTableLastField()
 	}
+
 	removePlayerByRowIdx(row, sanitize=true) {
 		this.data.removePlayer(row)
 		let tableRow = this.getPlayerTableRow(row)
@@ -617,56 +664,54 @@ class Controller {
 	}
 
 	createRowWithPlayer(table, player) {
-			let appInst = this
-			let newRow = $("<tr>")
-			let nameCell = $("<td>")
-			let EloCell = $("<td>")
-			let actionCell = $("<td>")
+		let appInst = this
+		let newRow = $("<tr>")
+		let nameCell = $("<td>")
+		let EloCell = $("<td>")
+		let actionCell = $("<td>")
 
-			nameCell.addClass("editablePlayerData")
-			EloCell.addClass("editablePlayerData")
+		nameCell.addClass("editablePlayerData")
+		EloCell.addClass("editablePlayerData")
 
-			let btnRemove = $("<button>")
-			btnRemove.on("click",
-				function(event) { appInst.removePlayer(this, appInst) })
-			btnRemove.html("Remove")
+		let btnRemove = $("<button>")
+		btnRemove.on("click",
+			function(event) { appInst.removePlayer(this, appInst) })
+		btnRemove.html("Remove")
 
-			let btnMoveUp = $("<button>")
-			btnMoveUp.html("Up")
-			btnMoveUp.on("click",
-				function(event) { appInst.moveUpPlayer(this, appInst) })
+		let btnMoveUp = $("<button>")
+		btnMoveUp.html("Up")
+		btnMoveUp.on("click",
+			function(event) { appInst.moveUpPlayer(this, appInst) })
 
-			let btnMoveDown = $("<button>")
-			btnMoveDown.html("Down")
-			btnMoveDown.on("click",
-				function(event) { appInst.moveDownPlayer(this, appInst) })
+		let btnMoveDown = $("<button>")
+		btnMoveDown.html("Down")
+		btnMoveDown.on("click",
+			function(event) { appInst.moveDownPlayer(this, appInst) })
 
-			actionCell.append([btnRemove, btnMoveUp, btnMoveDown])
-//			actionCell.html('<button onclick="app.removePlayer(this)">Remove</button>');
+		actionCell.append([btnRemove, btnMoveUp, btnMoveDown])
 
+		var editableName = $("<input>");
+		editableName.attr("type", "text")
+		editableName.addClass("editablePlayerData")
+		nameCell.append(editableName)
 
-			var editableName = $("<input>");
-			editableName.attr("type", "text")
-			editableName.addClass("editablePlayerData")
-			nameCell.append(editableName)
+		editableName.val(player.name)
+		editableName.on("input", 
+			function(event) { appInst.playerNameChanged(event, appInst) }
+		);
 
-			editableName.val(player.name)
-			editableName.on("input", 
-				function(event) { appInst.playerNameChanged(event, appInst) }
-			);
+		var editableRating = $("<input>");
+		editableRating.attr("type", "text")
+		editableRating.addClass("editablePlayerData")
+		EloCell.append(editableRating)
 
-			var editableRating = $("<input>");
-			editableRating.attr("type", "text")
-			editableRating.addClass("editablePlayerData")
-			EloCell.append(editableRating)
+		editableRating.val(player.Elo)
+		editableRating.on("input", 
+			function (event) { appInst.playerRatingChanged(event, appInst) }
+		);
 
-			editableRating.val(player.Elo)
-			editableRating.on("input", 
-				function (event) { appInst.playerRatingChanged(event, appInst) }
-			);
-
-			newRow.append(nameCell, EloCell, actionCell)
-			table.append(newRow)
+		newRow.append(nameCell, EloCell, actionCell)
+		table.append(newRow)
 	}
 
 	playerNameChanged(event, appObj) {
@@ -830,24 +875,57 @@ class Controller {
 
 		const rc = new ResultConversions()
 
+		// mitigation no.1 :-(
+		let oldTextCell = cell.text().replace("½","&frac12;")
+		let oldTextReverseCell = reverseCell.text().replace("½","&frac12;")
+
+		// mitigation no.2 :-(
+		if (oldTextCell === "-") oldTextCell = ""
+		if (oldTextReverseCell === "-") oldTextReverseCell = ""
+		
+		let newTextCell = ""
+		let newTextReverseCell = ""
+
 		switch(result) {
 			case"-": 
-				cell.text("");
-				reverseCell.text("");
+				//cell.text("");
+				//reverseCell.text("");
 				break;
 			case "1":
 			case "0":
 			case "0.5":
-				cell.html(rc.resultToHtml(result));
-				reverseCell.html(rc.resultToHtml(rc.invertedResult(result)))
+
+				newTextCell = rc.resultToHtml(result)
+				newTextReverseCell = rc.resultToHtml(rc.invertedResult(result))
 				break
 			case "0-0":
-				cell.text("0");
-				reverseCell.text("0");
+				newTextCell = "0"
+				newTextReverseCell = "0"
+
 				break
 			default: 
+				newTextCell = "?"
+				newTextReverseCell = "?"
 				console.warn("unknown result: '" + result + "'");
 		}
+
+		let space = ""
+		let res = ""
+		space = (oldTextCell === "" || newTextCell === "") ?
+			"" : "&nbsp;"
+
+		res = oldTextCell + space + newTextCell
+		// mitigation no.3 :-(
+		if (res === "") res = "-"
+		cell.html(res)
+
+		space = (oldTextReverseCell === "" || newTextReverseCell === "") ?
+			"" : "&nbsp;"
+
+		res = oldTextReverseCell + space + newTextReverseCell
+		if (res === "") res = "-"
+		reverseCell.html(res)
+
 	}
 	// ************************************************************
 	// results
@@ -1004,12 +1082,13 @@ class Controller {
 	// ************************************************************
 	// some test functions
 
-	generateTestResults(fullResults=true) {
+	generateTestResults(completeTournament=true) {
 		const results = ["1", "0.5", "0"];
 		//const results = ["1", "0.5", "0", "0-0"];
 
 		let numOfResultRoundsSet = this.data.rounds.length
-		if (!fullResults) {
+
+		if (!completeTournament) {
 			numOfResultRoundsSet = Math.floor(numOfResultRoundsSet/2)
 		}
 
@@ -1028,7 +1107,15 @@ class Controller {
 		this.updateResultsTab();
 	}
 
-	demo(evenPlayers=true, fullResults=true) {
+	demo(evenPlayers=true, completeTournament=true) {
+		this.insertOtherTournamentData({
+			'title' : 'Fictional Tournament',
+			'date': '4th Sixteenber, 6044',
+			'location_': 'Parallel Universe Gama',
+	//		'doubleRounded': false,
+			'autoShuffleOrderOfPlayers': true
+		})
+		this.retrieveOtherTournamentData()
 		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
@@ -1036,7 +1123,7 @@ class Controller {
 			return
 		}
 
-		this.generateTestResults(fullResults);
+		this.generateTestResults(completeTournament);
 		this.saveToCookie()
 
 		this.openTab('tab3');
@@ -1080,6 +1167,15 @@ class Controller {
     	  .catch((error) => console.error(error));
 		
 		$("#feedback").val("Thank You.");
+	}
+
+	// HTML API
+	criteriaInfo() {
+		alert(
+`Additional criteria:\n
+Berger Score - Calculated as full total final score from player you win with, and half final score from player you draw with. No score, if you lost.\n
+Mutual Score - In case some players have same score, only results among them are considered.\n
+More Wins - More fighting players are prefered, but that is discutable, as there are many draws after fierce battle.`)
 	}
 }
 

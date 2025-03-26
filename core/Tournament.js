@@ -200,34 +200,38 @@ export class Tournament {
 		this.saveToCookie()
 	}
 
-	generatePairingsForCookieLoad(number_of_players, method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(number_of_players);
+	generateCorePairingIdx(number_of_players, doubleRounded) {
+	    let rounds = generateBergerPairingsIdx(number_of_players);
 
     	// Add result to the pairings - "1" or "0" or "0.5" or ""
 		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
+		for (let i=0; i<rounds.length; i++) {
+			for (let y=0; y < rounds[i].length; y++) {
+				rounds[i][y] = new ResultRow(rounds[i][y][0], rounds[i][y][1], "-");	
 			}
 		}
 
-//		console.assert(!this.hasTournamentId())
-//		this.tournamentInfo.id = this.generateRandomId()
-//		this.saveToCookie()
+		if (doubleRounded) {
+			const numOfRounds = this.rounds.length
+			for (let i=0; i< numOfRounds; i++) {
+				rounds.push(new Array())
+				for (let y=0; y < rounds[i].length; y++) {
+					rounds[numOfRounds+i].push(
+						new ResultRow(rounds[i][y].player2Idx, rounds[i][y].player1Idx, "-")
+					)
+				}
+			}
+		}
+
+		return rounds
 	}
 
-	generatePairings(method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(this.players.length);
+	generatePairings() {
+	    this.rounds = this.generateCorePairingIdx(
+			this.players.length, 
+			this.tournamentInfo.doubleRounded
+		);
 
-    	// Add result to the pairings - "1" or "0" or "0.5" or ""
-		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
-			}
-		}
 		this.tournamentInfo.wasPairingGenerated = true
 
 		console.assert(!this.hasTournamentId())
