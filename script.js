@@ -78,8 +78,6 @@ class Controller {
 			if (cookie_data !== null) {
 				let preparedData = {}
 
-				console.log("cookie_data: ")
-				console.log(cookie_data)
 				// recreate tournament inf
 				preparedData.tournamentInfo = this.data.createTournamentInfo()
 				// TODO: should merge
@@ -110,7 +108,6 @@ class Controller {
 					})
 				})
 
-				console.log(preparedData)
 				this._loadAllPart2(preparedData)
 			}
 		}
@@ -243,6 +240,8 @@ class Controller {
 		ti.location_ = $("#inp-place").val()
 		ti.doubleRounded = $("#inp-double-rounded").is(':checked')
 		ti.autoShuffleOrderOfPlayers = $("#inp-auto-shuffle").is(':checked')
+
+		this.saveToCookie()
 	}
 
 	insertOtherTournamentData(opt) {
@@ -304,7 +303,6 @@ class Controller {
 		}
 				
 
-		// TODO: change logic of next questions, probably needs some better UI widgets
 		if (!this.data.tournamentInfo.autoShuffleOrderOfPlayers &&
 			!this.data.tournamentInfo.werePlayersRandomized) 
 		{
@@ -312,16 +310,15 @@ class Controller {
 				return false
 			}
 		}
-		// TODO: confirm final standing criteria before lock
 		// TODO: info about Bye is being added if num of players is odd
-
-		// Update the standings table names (dynamic criteria)
-		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Add a "Bye" player if the number of players is odd
 		this.data.addByeIfNeeded();
 
 		this.updatePlayersTable();
+
+		// Update the standings table names (dynamic criteria)
+		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Generate pairings
 		this.generatePairings()

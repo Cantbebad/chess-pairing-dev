@@ -10,6 +10,15 @@ class ResultRow {
 	}
 }
 
+function debugGetCallingStack() {
+	try {
+		throw new Error("")
+	}
+	catch(e) {
+		console.log(e.stack)
+	}
+}
+
 // model class - only data and operations on it, no DOM usage
 // all data is stored here
 // can be separate js module
@@ -212,7 +221,7 @@ export class Tournament {
 		}
 
 		if (doubleRounded) {
-			const numOfRounds = this.rounds.length
+			const numOfRounds = rounds.length
 			for (let i=0; i< numOfRounds; i++) {
 				rounds.push(new Array())
 				for (let y=0; y < rounds[i].length; y++) {
