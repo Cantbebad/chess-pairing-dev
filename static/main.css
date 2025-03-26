@@ -1,0 +1,360 @@
+
+/* default color scheme: light */
+:root {
+	--cp-border-color: black; 
+	--cp-border-color-inv: white; 
+    --cp-bg-color: white;
+    --cp-bg-color-inv: black;
+    --cp-bg-color-row-alternative: #F9EEEE; /*#6C8BF5;*/
+    --cp-color-row-alternative: black;
+    --cp-bg-color-not-selected-item: rgb(210, 210, 210);
+	--cp-color: black;
+	--cp-color-inv: white;
+	--cp-color-fff : #fff;
+	--cp-color-grey: black;
+	--cp-color-disabled: grey;
+	--cp-button-color: black;;
+}
+
+@media (prefers-color-scheme: dark) {
+:root {
+	--cp-border-color: WhiteSmoke; 
+	--cp-border-color-inv: black; 
+    --cp-bg-color: black;
+	--cp-bg-color-inv: WhiteSmoke;
+    --cp-bg-color-row-alternative: #342f2f;
+    --cp-color-row-alternative: WhiteSmoke;
+    --cp-bg-color-not-selected-item: black;
+	--cp-color: WhiteSmoke;
+	--cp-color-inv: black;
+	--cp-color-fff : WhiteSmoke; /*#fff;*/
+	--cp-color-grey: grey;
+	--cp-color-disabled: grey;
+	--cp-button-color: black;;
+}
+
+} /* media dark scheme end */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 1em;
+	background-color: var(--cp-bg-color);
+	color: var(--cp-color);
+}
+
+th, td, footer, ul, li, p, small, select, input, a {
+	color: var(--cp-color);
+}
+footer, p, th, select, input {
+	background-color: var(--cp-bg-color);
+}
+button {
+	color: var(--cp-button-color);
+}
+
+h2, h3 {
+	color: var(--cp-color);
+	text-align: center
+}
+
+th,td {
+	border-color: var(--cp-border-color);
+}
+
+div .empty-line {
+	display: block;
+	height: 1em;
+	width: 100%;
+}
+
+div .info-line {
+	display: block;
+	height: 1em;
+	font-weight: bold;
+	text-align: center;
+}
+
+input, select, button {
+	font-size: 1em;
+}
+
+.pairing-not-generated {
+	display: none;
+	text-align: center;
+}
+
+.pairing-not-generated.show {
+	display: block;
+	height: 1em;
+	margin: 1em;
+	text-align: center;
+}
+
+.tab-container {
+    display: flex;
+	margin: auto;
+	align-items: center;
+	justify-content: safe center;
+	gap: 0.1%;
+    border-bottom: 1px solid var(--cp-border-color-inv);
+}
+.tab {
+    padding: 4px 4px;
+	display: block;
+    cursor: pointer;
+    border: 1px solid var(--cp-border-color-inv);
+    border-bottom: none;
+    background-color: var(--cp-bg-color-not-selected-item);
+    /* margin-right: 2px; */
+}
+.tab.active {
+    background-color: var(--cp-bg-color-inv);
+    border-top: 1px solid var(--cp-border-color);
+    border-left: 1px solid var(--cp-border-color);
+    border-right: 1px solid var(--cp-border-color);
+	color: var(--cp-color-inv);
+}
+.tab-content {
+    display: none;
+    padding: 8px;
+    border: 1px solid var(--cp-border-color-inv);
+    margin-top: -1px;
+}
+.tab-content.active {
+    display: block;
+}
+table {
+    /* width: 100%; */
+    border-collapse: collapse;
+	margin: auto;
+    margin-top: 4px;
+}
+th, td {
+    border: 1px solid var(--cp-border-color);
+    padding: 3px;
+    text-align: left;
+}
+th {
+    background-color: var(--cp-bg-color);
+}
+
+div .add-player-container {
+    margin-top: 8px;
+    display: flex;
+	align-items: center;
+	justify-content: safe center;
+}
+
+.button-container {
+    /* float: right; */
+    /* float: left; */
+	align: center;
+	display: flex;
+	align-items: center;
+	justify-content: safe center;
+}
+.button-container button {
+    margin-left: 4px;
+}
+
+/*
+#dataTable {
+	display: block;
+}
+*/
+
+.locked {
+opacity: 0.5;
+pointer-events: none;
+}
+table.locked {
+opacity: 0.9;
+pointer-events: none;
+}
+
+table.locked button {
+	color: var(--cp-color-disabled);
+}
+
+/*
+button:disabled {
+	color: var(--cp-color-disabled);
+}
+*/
+#td-verify-options {
+	text-align: center;
+	font-weight: bold;
+}
+
+table.table-demo {
+	table-layout: fixed;
+	word-wrap: break-word;	
+}
+table.table-demo th {
+	border-color: var(--cp-border-color-inv);
+}
+
+table.table-demo td {
+	border-color: var(--cp-border-color-inv);
+}
+
+#btn-lock-and-gen, #addBtn {
+	padding: 5px;
+	font-size: large;
+}
+
+
+.round-container {
+    margin-top: 8px;
+    display: flex;
+	align-items: center;
+	justify-content: safe center;
+	gap: 1%;
+}
+.round-tab {
+    padding: 2px 4px;
+    cursor: pointer;
+    border: 1px solid var(--cp-border-color-inv);
+    border-bottom: none;
+    background-color: var(--cp-bg-color-not-selected-item);
+    margin-right: 2px;
+    display: inline-block;
+	align-items: center;
+	justify-content: center;
+	font-size: x-large;
+}
+.round-tab.active {
+    background-color: var(--cp-bg-color);
+    border-top: 1px solid var(--cp-border-color);
+}
+.round-content {
+    display: none;
+    padding: 8px;
+    border: 1px solid var(--cp-border-color-inv);
+    margin-top: -1px;
+}
+.round-content.active {
+    display: block;
+}
+
+#tab2 tbody tr:nth-child(odd) {
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-fff); 
+}
+
+/* Apply fixed width ONLY to the table inside tab3 */
+#tab3 table {
+    border-collapse: collapse;
+    /* width: 100%; */
+    margin: 8px auto;
+    table-layout: auto;
+}
+
+#tab3 th, #tab3 td {
+    border: 1px solid var(--cp-border-color);
+    padding: 3px;
+    text-align: center;
+	vertical-align: center;
+    /* width: 28px; /* Set a fixed width for all columns */ 
+}
+
+#tab3 th {
+    background-color: var(--cp-bg-color);
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	width: fit-content;
+}
+
+#tab3 th span {
+    /*background-color: var(--cp-bg-color);*/
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	padding-inline: inherit;
+	white-space: nowrap;
+}
+
+#tab3 th.th-left-top {
+	border-left: none;
+	border-top: none;
+	background-image: url("favicon.png");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+#tab3 td.empty {
+	background-color: var(--cp-color-grey);
+	color: var(--cp-color-grey);
+}
+
+#tab3 thead th:nth-of-type(odd) {
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-row-alternative); 
+}
+
+#tab3 tbody tr:nth-child(even) {
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-row-alternative); 
+}
+
+#tab4 tbody tr:nth-child(odd) {
+  background-color: var(--cp-bg-color-row-alternative);
+  color: var(--cp-color-row-alternative); 
+}
+
+/* Apply fixed width ONLY to the table inside tab4 */
+
+#tab4 table {
+    border-collapse: collapse;
+    /* width: 50%; */
+    margin: 8px auto;
+    /*table-layout: fixed; /* Ensures uniform column width */
+}
+#tab4 td, th {
+	text-align: center;
+	vertical-align: center;
+}
+#tab4 th {
+	word-wrap: break-word;
+}
+
+#tab5, #tab4_5 {
+	text-align: center;
+}
+
+ul {
+	display: inline-block;
+	text-align: left;
+}
+
+ul li {
+	/* list-style: none; */
+}
+
+li.li-setting {
+	list-style: none; 
+	padding-bottom: 5px;
+}
+
+hr {
+	align: center;
+}
+
+footer {
+	align: center;
+    text-align: center;
+    padding: 2px;
+    position: relative;
+    bottom: 0;
+    width: 90%;
+    background-color: var(--cp-bg-color);
+    border-top: 1px solid var(--cp-border-color);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+p.p-info {
+	font-size: small;
+	text-align: center;
+}
+
+/* } */
