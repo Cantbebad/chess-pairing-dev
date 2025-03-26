@@ -869,6 +869,8 @@ export class Controller {
 		if (!this.wasPairingGenerated()) return
 		let result = resultRow.result
 
+		// TODO: double rounded - does not change correctly, when result is changed
+
 		// two coresponding fields in the table are updated
 		let ind1 = resultRow.player1Idx
 		let ind2 = resultRow.player2Idx
