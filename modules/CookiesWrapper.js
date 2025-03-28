@@ -36,7 +36,6 @@ export class CookiesWrapper {
 			console.log(e.stack)
 		}
 		
-		console.error("*****************************************")
 		document.cookie = name+"="+value+'; max-age='+max_age
 		
 	}
