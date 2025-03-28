@@ -157,6 +157,8 @@ export class FeatPersistentCookie {
 	loadAll(cookie_name) {
 		let data = new CookiesWrapper().load_base64_from_cookie(cookie_name)
 
+		if (data === null) return null
+
 		let res = this.deserialize_tournament_data(data)
 
 		return res
