@@ -709,7 +709,7 @@ class Controller {
 			{"name": "Wilhelm Steinitz", "Elo": 2501},
 			{"name": "Paul Morphy", "Elo": 2477},
 			{"name": "Gioachino Greco", "Elo": 2060},
-			{"name": "François Philidor", "Elo": 2151},
+			{"name": "François-André Danican Philidor", "Elo": 2151},
 			{"name": "Siegbert Tarrasch", "Elo": 2355},
 			{"name": "Aron Nimzowitsch", "Elo": 2430},
 			{"name": "Frank Marshall", "Elo": 2380}
@@ -1003,11 +1003,11 @@ class Controller {
 		const roundContents = $("#roundContents");
 
 		// Create round tab
-		const roundTab = document.createElement("div");
-		roundTab.className = "round-tab";
-		roundTab.innerText = `${roundNumber}`;
-		roundTab.onclick = () => this.openRound(roundNumber); // Use captured round number
-		roundTabs.appendChild(roundTab);
+		const roundTab = $("<div>");
+		roundTab.addClass("round-tab")
+		roundTab.text(`${roundNumber}`);
+		roundTab.on("click", function () { app.openRound(roundNumber)}); // Use captured round number
+		roundTabs.append(roundTab);
 
 		// Create round content
 		const roundContent = $("<div>");
@@ -1018,10 +1018,12 @@ class Controller {
 		
 		let html = `
 			<thead>
+				<tr>
 					<th>Board</th>
 					<th>White Pieces</th>
 					<th>Black Pieces</th>
 					<th>Result</th>
+				</tr>
 			</thead>
 			<tbody>`
 
@@ -1083,8 +1085,11 @@ class Controller {
 		this.data.players.forEach(function(player) {
 			let th = null
 			th = $("<th>");
+			// fix safari on mobile
+			let span = $("<span>")
 			//th.css({ "writing-mode" : "vertical-rl", "text-orientation" : "mixed" })
-			th.text(player.name);
+			span.text(player.name);
+			th.append(span)
 			headerRow.append(th);
 		});
 

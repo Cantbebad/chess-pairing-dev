@@ -118,12 +118,17 @@ pointer-events: none;
     display: block;
 }
 
+#tab2 tbody tr:nth-child(odd) {
+  background-color: #6C8BF5;
+  color: #fff; 
+}
+
 /* Apply fixed width ONLY to the table inside tab3 */
 #tab3 table {
     border-collapse: collapse;
     /* width: 100%; */
     margin: 8px auto;
-    /* table-layout: fixed; /* Ensures uniform column width */ 
+    table-layout: auto;
 }
 
 #tab3 th, #tab3 td {
@@ -138,6 +143,15 @@ pointer-events: none;
     background-color: white;
 	writing-mode: vertical-rl;
 	text-orientation: mixed;
+	width: fit-content;
+}
+
+#tab3 th span {
+    /*background-color: white;*/
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	padding-inline: inherit;
+	white-space: nowrap;
 }
 
 #tab3 th.th-left-top {
@@ -153,6 +167,11 @@ pointer-events: none;
     background-color: black;
 }
 
+#tab3 thead th:nth-of-type(odd) {
+  background-color: #6C8BF5;
+  color: #fff; 
+}
+
 #tab3 tbody tr:nth-child(even) {
   background-color: #6C8BF5;
   color: #fff; 
@@ -162,20 +181,6 @@ pointer-events: none;
   background-color: #6C8BF5;
   color: #fff; 
 }
-
-/*
-#tab3 tbody tr td:nth-of-type(even) {
-  background-color: #0C00F5;
-  color: #fff; 
-}
-*/
-
-/*
-#tab3 tbody tr:nth-child(even) {
-  background-color: ;
-  color: #fff;
-}
-*/
 
 /* Apply fixed width ONLY to the table inside tab4 */
 

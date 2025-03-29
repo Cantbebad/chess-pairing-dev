@@ -64,7 +64,7 @@
 <body>
     <!-- Tabs -->
     <div class="tab-container">
-        <div class="tab" id="head_tab1" active onclick="app.openTab('tab1')">Players</div>
+        <div class="tab active" id="head_tab1" onclick="app.openTab('tab1')">Players</div>
         <div class="tab" id="head_tab2" onclick="app.openTab('tab2')">Pairing</div>
         <div class="tab" id="head_tab3" onclick="app.openTab('tab3')">Crosstable</div>
         <div class="tab" id="head_tab4" onclick="app.openTab('tab4')">Standing</div>
@@ -78,7 +78,7 @@
 		<div class="add-player-container">
 			<input type="text" id="name" placeholder="Enter name" required>
 			<input type="number" id="Elo" placeholder="Enter Elo" required>
-			<button onclick="app.addPlayerToTable()">Add</button>
+        	<button id='addBtn' onclick="app.addPlayerToTable()">Add</button>
 		</div>
 		<p></p>
         <div class="button-container">
@@ -104,7 +104,6 @@
                 <!-- Rows will be added here -->
             </tbody>
         </table>
-		</div>
 		<p></p>
         <div class="button-container">
             <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
