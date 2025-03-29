@@ -19,7 +19,8 @@ const tournament_info_schema_v2 = [
 	[ 'str8', 'title' ],
 	[ 'str8', 'date' ],
 	[ 'str8', 'location_' ],
-	[ 'b8' , 'pairing_version'],
+	[ 'b8' , 'pairingVersion'],
+	[ 'b8', 'themeNumber' ],
 	[ 'array8', 'finalStandingsResolvers', finalStandingsResolvers_schema_v2 ]
 ]
 
@@ -29,9 +30,10 @@ const results_schema_v2 = [
 ]
 
 const bs_container_schema_v2 = [
-	[ 'bs_bool' , 'double_rounded'],  // moved
+	[ 'bs_bool' , 'doubleRounded'],  // moved
 	[ 'bs_bool' , 'werePlayersRandomized'], // moved
 	[ 'bs_bool' , 'wasPairingGenerated'],  // moved
+	[ 'bs_bool' , 'autoShuffleOrderOfPlayers'],  // moved
 	[ 'array16', 'results', results_schema_v2 ]
 ]
 
@@ -45,7 +47,8 @@ const tournament_data_schema_v2 = [
 const remap_table = [
 	[ 'tournamentInfo.werePlayersRandomized', 'werePlayersRandomized' ],
 	[ 'tournamentInfo.wasPairingGenerated',  'wasPairingGenerated'],
-	[ 'tournamentInfo.double_rounded', 'double_rounded']
+	[ 'tournamentInfo.doubleRounded', 'doubleRounded'],
+	[ 'tournamentInfo.autoShuffleOrderOfPlayers', 'autoShuffleOrderOfPlayers']
 ]
 
 

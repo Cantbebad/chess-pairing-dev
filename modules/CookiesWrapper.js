@@ -27,13 +27,14 @@ export class CookiesWrapper {
 		////console.log("in update cookie")
 		// nodejs workaround
 		try {
-			if (document.constructor.name == 'NodeDocument484948494849') {
+			if (document.constructor.name === 'NodeDocument484948494849') {
 				document.cookie[name] = value
-				console.log("in node workaround")
 				return
 			}
 		}			
-		catch(e) {;}
+		catch(e) {
+			console.log(e.stack)
+		}
 		
 		document.cookie = name+"="+value+'; max-age='+max_age
 		
@@ -42,14 +43,16 @@ export class CookiesWrapper {
 	get_cookie_value(name) {
 		// nodejs workaround
 		try {
-			if (document.constructor.name == 'NodeDocument484948494849') {
-				if (document.cookie[name] === undefined) {
+			if (document.constructor.name === 'NodeDocument484948494849') {
+				if (typeof document.cookie[name] === 'undefined') {
 					return null
 				}
 				return document.cookie[name]
 			}
 		}
-		catch(e) {;}
+		catch(e) {
+			console.log(e)
+		}
 
 		let cookies = document.cookie.split(";").map((x) => x.trim())
 
@@ -71,8 +74,10 @@ export class CookiesWrapper {
 	load_base64_from_cookie(name) {
 		let data = this.get_cookie_value(name)
 
-		data.replaceAll('|', '/')
-		data.replaceAll('@', '=') 
+		if ( data !== null) {
+			data.replaceAll('|', '/')
+			data.replaceAll('@', '=') 
+		}
 	
 		return data
 	}

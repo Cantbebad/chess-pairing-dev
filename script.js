@@ -1,381 +1,6 @@
 
-import { FeatPersistentCookie } from './modules/FeatPersistentCookie.js'
-
-class ResultRow {
-	constructor(player1Idx, player2Idx, result="-") {
-		this.player1Idx = player1Idx
-		this.player2Idx = player2Idx
-		this.result = result
-	}
-}
-
-// model class - only data and operations on it, no DOM usage
-// all data is stored here
-// can be separate js module
-class Tournament {
-	// need some strings for JSON
-	static MUTUAL_RESULTS_CRIT = "_Same_group";
-	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
-	static WINS_CRIT = "_Wins";
-
-	static criteriaList = [
-		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT, Tournament.WINS_CRIT ],
-		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT ],
-		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT, Tournament.WINS_CRIT ],
-		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT],
-		[ Tournament.SONNEBORG_BERGER_CRIT],
-		[],
-		]
-
-	constructor() {
-		this.tournamentInfo = this.createTournamentInfo() 
-
-		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
-		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
-
-		this.cookieStorage = new FeatPersistentCookie() 
-	}
-
-	createTournamentInfo() {
-		return { 
-
-			// generate random hex string (used for save to distinguish files)
-			// stays same for one tournament
-			// will be generated, when pairing is done or on first save action
-			// after browser refresh, it will be loaded from cookies (if allowed)
-			id : null,
-
-			// next are not implemented yet
-			seed : "", // TODO: generated (to check correctness of pairings for purists)
-			title : "", // opt
-			date : "", // opt
-			location_ : "", // opt
-
-			werePlayersRandomized : false,
-			double_rounded : false,
-			wasPairingGenerated: false,
-			pairing_version : 1,
-
-			// the order is priority
-			finalStandingsResolvers : [
-				Tournament.MUTUAL_RESULTS_CRIT,
-				Tournament.SONNEBORG_BERGER_CRIT,
-				Tournament.WINS_CRIT
-			]
-		}
-	}
-
-	saveToCookie() {
-		try {
-			if(! CookieConsent.acceptedCategory('Tournament')){
-				return
-			}
-			let data = {}
-			let players_copy = this.players.slice()
-			data.players = players_copy.map(p => { 
-				return {'name' : p.name, 'rating' : p.Elo} })
-			data.results = []
-
-			this.rounds.forEach((round, round_i) => {
-				round.forEach((resultRecord, rec_i) => {
-					data.results.push(result_to_save_id(this.rounds[round_i][rec_i].result))
-				})
-			})
-			data.tournamentInfo = this.tournamentInfo
-			this.cookieStorage.saveAll('trndata', data)
-		}
-		catch(e) {
-			console.log(e)
-		}
-	}
-		
-	generateRandomId() {
-		// generate random hex string
-		return Math.floor((Math.random()* 1e10 + 1e10)).toString(16)
-	}
-
-	hasTournamentId() {
-		return this.tournamentInfo.id !== null
-	}
-
-	addPlayer(name, Elo, bye /*opt*/) {
-		// if 'bye' set to something other then null, it is bye 
-		// 'bye' variable not used anywhere now
-		this.players.push({ name: name, Elo: Number(Elo), bye: bye });
-		this.saveToCookie()
-	}
-	
-	removePlayer(idx) {
-		this.players.splice(idx, 1); // Remove from players array
-		this.saveToCookie()
-	}
-
-	_isSameNamePlayer() {
-		let areSame = false
-		this.players.forEach((player1, idx1) => {
-			this.players.forEach((player2, idx2) => {
-				if (idx1 !== idx2 && player1.name === player2.name) {
-					areSame = true
-				}
-			})
-		})
-		return areSame
-	}
-
-	_isPlayerNameTooLong(name) {
-		// can throw
-		// need bytes length, if utf-8 string
-		return new TextEncoder().encode(name).length > 255
-	}
-
-	checkPlayerNamesBeforeLock() {
-		if (this._isSameNamePlayer()) return "same name"
-		try {
-			if (this.players.some((player =>  { 
-				return this._isPlayerNameTooLong(player.name)
-			}))
-			) {
-				return "too long"	
-			}
-		}
-		catch(e) {
-			console.log(e)
-			return "wrong utf8"
-		}
-		return ""
-	}
-	
-	lookupPlayerIndex(name) {
-	    // return index of requested player
-	    return this.players.findIndex(player => player.name === name);
-	}
-
-	setResult(roundIndex, resultRow, result) {
-		if (roundIndex > this.rounds.length || resultRow > this.rounds[roundIndex].length) {
-			throw new Error("round or row index out of range");
-		}
-    	this.rounds[roundIndex][resultRow].result = result;
-		this.saveToCookie()
-	}
-
-	getPlayer(idx) {
-		if (idx <0 || idx > this.players.length) {
-			console.error("player index out of range");
-			throw new Error("player index out of range"); 
-		}
-		return this.players[idx];
-	}
-
-	sortPlayers() {
-		this.players.sort((a, b) => b.Elo - a.Elo); // Sort players by Elo in descending order
-		this.saveToCookie()
-	}
-
-	randomizePlayers() {
-		for (let i = this.players.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[this.players[i], this.players[j]] = [this.players[j], this.players[i]];
-		}
-		this.tournamentInfo.werePlayersRandomized = true
-		this.saveToCookie()
-	}
-
-	addByeIfNeeded() {
-	    // Add a "Bye" player if the number of players is odd
-	    if (this.players.length % 2 !== 0) {
-        	this.players.push({ name: "Bye", Elo: 0, bye: true});
-    	}
-	}
-
-	clearResults() {
-		this.rounds = [];
-		this.saveToCookie()
-	}
-
-	generatePairingsForCookieLoad(number_of_players, method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(number_of_players);
-
-    	// Add result to the pairings - "1" or "0" or "0.5" or ""
-		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
-			}
-		}
-
-//		console.assert(!this.hasTournamentId())
-//		this.tournamentInfo.id = this.generateRandomId()
-//		this.saveToCookie()
-	}
-
-	generatePairings(method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(this.players.length);
-
-    	// Add result to the pairings - "1" or "0" or "0.5" or ""
-		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
-			}
-		}
-		this.tournamentInfo.wasPairingGenerated = true
-
-		console.assert(!this.hasTournamentId())
-		this.tournamentInfo.id = this.generateRandomId()
-		this.saveToCookie()
-	}
-
-	calculateStandings() {
-		let standings = this.players.map(player => ({
-			name: player.name,
-			elo: player.Elo,
-			points: 0,
-			//berger: 0,
-			additionalCriteria: 
-			  new Array(this.tournamentInfo.finalStandingsResolvers.length).fill(0)
-		}));
-
-		this.calcPoints(standings)
-
-		// calculate additional criteria
-		for (let idx = 0;
-			idx < this.tournamentInfo.finalStandingsResolvers.length;
-			idx++)
-		{
-			let method = this.tournamentInfo.finalStandingsResolvers[idx]
-			switch(method) {
-				case Tournament.MUTUAL_RESULTS_CRIT:
-					this.calcSameGroupScore(standings, idx)
-					break
-				case Tournament.SONNEBORG_BERGER_CRIT:
-					this.calcSonneborgBerger(standings, idx)
-					break
-				case Tournament.WINS_CRIT:
-					this.calcWins(standings, idx)
-					break
-				default:
-					console.error("unknown method")
-			}
-		};
-
-		// sort it all, use all criteria at once
-		standings.sort((a, b) => {
-			if (b.points !== a.points) {
-				return b.points - a.points; // Sort by points
-			} else {
-				// sort by additional criteria
-				for (let idx = 0; 
-					idx< this.tournamentInfo.finalStandingsResolvers.length; 
-					idx++) {
-
-					if (a.additionalCriteria[idx] !== b.additionalCriteria[idx]) {
-						return b.additionalCriteria[idx] - a.additionalCriteria[idx]
-					}
-				}
-				return 0
-			}
-		});
-
-		return standings
-	}
-
-	// Calculate points
-	calcPoints(standings) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-
-				let result = resultRow.result
-				switch(result) {
-					case "1":
-					case "0":
-					case "0.5":
-					case "0-0":
-						player1.points += resultToValue(result);
-						player2.points += resultToValue(invertedResult(result));
-						break
-					default:
-						;
-				}
-			});
-		});
-	}
-
-	// Calculate Neustadtl Sonneborn–Berger score
-	calcSonneborgBerger(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-				switch(resultRow.result) {
-					case "1":
-						player1.additionalCriteria[critIdx] += player2.points;
-						break;
-					case "0":
-						player2.additionalCriteria[critIdx] += player1.points;
-						break;
-					case "0.5":
-						player1.additionalCriteria[critIdx] += player2.points * 0.5;
-						player2.additionalCriteria[critIdx] += player1.points * 0.5;
-						break;
-					default:
-						;
-				}
-			});
-		});
-	}
-
-	// Calculate mutual results 
-	calcSameGroupScore(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-
-				if (player1.points === player2.points) {
-					switch(resultRow.result) {
-						case "1":
-						case "0":
-						case "0.5":
-						case "0-0":
-							player1.additionalCriteria[critIdx] += 
-								resultToValue(resultRow.result);
-							player2.additionalCriteria[critIdx] += 
-								resultToValue(invertedResult(resultRow.result));
-							break;
-						default:
-							;
-					}
-				}
-			});
-		});
-	}
-
-	// brx: solves case when more than 2 players have same score
-	// Calculate 'More wins better' criterium
-	calcWins(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-				switch(resultRow.result) {
-					case "1":
-					case "0":
-						player1.additionalCriteria[critIdx] += 
-							resultToValue(resultRow.result);
-						player2.additionalCriteria[critIdx] += 
-							resultToValue(invertedResult(resultRow.result));
-						break;
-					default:
-						;
-				}
-			});
-		});
-	}
-}
+import { Tournament } from './core/Tournament.js'
+import { ResultConversions } from './core/ResultConversions.js'
 
 function getCriteriumVisibleName(crit) {
 	switch(crit) {
@@ -391,76 +16,19 @@ function getCriteriumVisibleName(crit) {
 	}
 }
 
-function resultToHtml(result) {
-	switch(result) {
-		case "0.5":
-			return "&frac12;"
-		case "1":
-		case "0":
-		case "0-0":
-			return result
-		default:
-			return '-'
+function debugGetCallingStack() {
+	try {
+		throw new Error("")
 	}
-}
-
-function invertedResult(result) {
-	switch(result) {
-		case "1": 
-			return "0"
-		case "0":
-			return "1"
-		case "0.5":
-		case "0-0":
-		default:
-			;
+	catch(e) {
+		console.log(e.stack)
 	}
-	return result
-}
-
-function resultToValue(result) {
-	switch(result) {
-		case "1": 
-			return 1
-		case "0":
-		case "0-0":
-			return 0
-		case "0.5":
-			return 0.5
-		default:
-			console.error("result data can't be used as value now");
-	}
-	throw new Error("result data can't be used as value now");
-}
-
-function result_to_save_id(result) {
-	switch(result) {
-		case "0":
-			return 1
-		case "0.5":
-			return 2
-		case "1":
-			return 3
-		case "0-0":
-			return 4
-		default:
-			return 0
-	}
-}
-
-function result_from_save_id(result) {
-	let pos = [ '-', '0', '0.5', '1', '0-0' ]
-
-	if (result >= 0 && result < pos.length)
-		return pos[result]
-	// ? log error ?
-	return '-'
 }
 
 // ************************************************************
 
 
-class Controller {
+export class Controller {
 	static COOKIE_ID = "tournament-id="
 
 	constructor(tournament_data) {
@@ -486,6 +54,19 @@ class Controller {
 			;
 		}
 		this.loadFromCookie()
+
+		if (this.wasPairingGenerated()) {
+			$(".pairing-not-generated").removeClass("show")
+		} else {
+			$(".pairing-not-generated").addClass("show")
+		}
+		this.checkPlayerTableLastField();
+	}
+
+	wasPairingGenerated() {
+		console.assert(typeof this.data.tournamentInfo.wasPairingGenerated !==
+			'undefined')
+		return this.data.tournamentInfo.wasPairingGenerated
 	}
 
 	loadFromCookie() {
@@ -495,9 +76,15 @@ class Controller {
 			}
 			let cookie_data = this.data.cookieStorage.loadAll('trndata')
 			if (cookie_data !== null) {
-				let data = {}
+				let preparedData = {}
+
+				// recreate tournament inf
+				preparedData.tournamentInfo = this.data.createTournamentInfo()
+				// TODO: should merge
+				preparedData.tournamentInfo = cookie_data.tournamentInfo
+
 				// remap 'ratings' to 'Elo'
-				data.players = cookie_data.players.map(p => { 
+				preparedData.players = cookie_data.players.map(p => { 
 					return {'name' : p.name, 'Elo' : p.rating} })
 
 				if (cookie_data.results.length || 
@@ -507,27 +94,22 @@ class Controller {
 				}
 
 				// recreate results
-				data.rounds = this.data.rounds
+				const rc = new ResultConversions()
 
 				let idx = 0
-				data.rounds.forEach((round, round_i) => {
+				preparedData.rounds.forEach((round, round_i) => {
 					round.forEach((resultRecord, rec_i) => {
-						data.rounds[round_i][rec_i].result =
-							result_from_save_id(cookie_data.results[idx])
+						preparedData.rounds[round_i][rec_i].result =
+							rc.result_from_save_id(cookie_data.results[idx])
 						idx++
 					})
 				})
 
-				// recreate tournament inf
-				data.tournamentInfo = this.data.createTournamentInfo()
-
-				data.tournamentInfo = cookie_data.tournamentInfo
-
-				this._loadAllPart2(data)
+				this._loadAllPart2(preparedData)
 			}
 		}
 		catch(e) {
-			console.log("This is catched exception. This is not error, if cookie for Tournament data was disabled.\n" + e)
+			console.error(e + "\n" + e.stack)
 		}
 	}
 
@@ -537,13 +119,23 @@ class Controller {
 
 	setCookie(tournament_id) {
 		if(CookieConsent.acceptedCategory('Tournament')){
+			try {
+				if (document.constructor.name === 'NodeDocument484948494849') {
+					// when we are in NodeJs 
+					document.cookie[Controller.COOKIE_ID] = tournament_id	
+					return
+				}
+			}
+			catch(e) {
+				console.log("error in setting cookie: " + e)
+			}
 			document.cookie= `${Controller.COOKIE_ID}${tournament_id}; max-age=999999;`
 		}
 	}
 
 	newTournament(confirmed = false) {
 		if (!confirmed) {
-			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
+			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nIS IT OK ?")) {
 				return
 			}
 		}
@@ -556,7 +148,7 @@ class Controller {
 		// clear all Tournament data
 		this.data = new Tournament()
 
-		this.clearPlayersTable()
+		this.clearPlayersTable(true)
 		this.clearResultsTab()
 		this.clearCrosstableTab()
 		this.clearStandingsTab()
@@ -564,45 +156,59 @@ class Controller {
 		// set no criteria names in standing table
 		this.updateStandingTableNames([])
 
+		this.checkPlayerTableLastField();
+
 		this.setCookie("")
 		this.unlockWidgets()
 		this.saveToCookie()
 	}
 
 	unlockWidgets() {
-		$("#name").prop('disabled', false);
-		$("#Elo").prop('disabled', false);
-
 		// Enable buttons
 		$('#tab1 .button-container button').prop('disabled', false);
-		$('#addBtn').prop('disabled', false)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").removeClass('locked');
 		$("#criteria").prop('disabled', false);
+
+		this.wasPairingGenerated() ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
 	}
 
 	lockWidgets() {
 		// Disable input fields
-		$("#name").prop('disabled', true);
-		$("#Elo").prop('disabled', true);
 
 		// Disable buttons
 		$('#tab1 .button-container button').prop('disabled', true);
-		$('#addBtn').prop('disabled', true)
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").addClass('locked');
 		$("#criteria").prop('disabled', true);
+
+		this.wasPairingGenerated() ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
 	}
 
 	getPlayerTableRow(idx) {
-		let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+		let rows = $("#dataTable tbody tr")
+
 		if (idx > rows.length) return null
 		return rows[idx]
 	}
 
-	lockAndPairing() {
+	checkPlayerTableLastField() {
+		if (!this.wasPairingGenerated() &&
+			(!this.data.players.length ||
+			this.data.players[this.data.players.length-1].name !== '')
+		) {
+				//debugGetCallingStack()
+				this.addPlayerToTable('', 0)
+		}
+	}
+
+	removeEmptyFieldsFromPlayersTable() {
 		// trim player names -> input fields may contain only spaces, 
 		// special utf8 empty chars not considered
 		let toRemove = new Array()
@@ -615,49 +221,114 @@ class Controller {
 
 		// remove empty fields 
 		toRemove.reverse().forEach(index => {
-			this.removePlayerByRowIdx(index)
+			this.removePlayerByRowIdx(index, false)
 		})
+	}
+
+	checkPlayerRatings() {
+		let isOk = true
+		this.data.players.forEach((pl, idx) => {
+			if (isNaN(Number(pl.Elo))) {
+				this.data.players[idx].Elo = 0
+				isOk = false
+			}
+			else {
+				this.data.players[idx].Elo = Number(pl.Elo)
+			}
+		})
+
+		return isOk
+	}
+	
+	retrieveOtherTournamentData() {
+		let ti = this.data.tournamentInfo
+		ti.title = $("#inp-title").val()
+		ti.date = $("#inp-date").val()
+		ti.location_ = $("#inp-place").val()
+		ti.doubleRounded = $("#inp-double-rounded").is(':checked')
+		ti.autoShuffleOrderOfPlayers = $("#inp-auto-shuffle").is(':checked')
+
+		this.saveToCookie()
+	}
+
+	insertOtherTournamentData(opt) {
+		if (opt.title && opt.title.trim() !== '') {
+			$("#inp-title").attr("value", opt.title.trim())
+		}
+
+		if (opt.date && opt.date.trim() !== '') {
+			$("#inp-date").attr("value", opt.date.trim())
+		}
+
+		if (opt.location_ && opt.location_.trim() !== '') {
+			$("#inp-place").attr("value", opt.location_.trim())
+		}
+
+		if (opt.doubleRounded) {
+			$("#inp-double-rounded").prop("checked", opt.doubleRounded)
+		}
+
+		if (opt.autoShuffleOrderOfPlayers) {
+			$("#inp-auto-shuffle").prop("checked", opt.autoShuffleOrderOfPlayers)
+		}
+	}
+
+	lockAndPairing() {
+		const isOk = this._lockAndPairing()
+		if (!isOk) {
+			this.checkPlayerTableLastField();
+		}
+		return isOk
+	}
+
+	_lockAndPairing() {
+		this.retrieveOtherTournamentData()
+		this.removeEmptyFieldsFromPlayersTable()
+		if (!this.checkPlayerRatings()) {
+			alert("Same player has wrong rating (not number)\n. Please, check ratings again.");
+			return false
+		}	
 		
 		if (this.data.players.length < 2) {
 			alert("Not enought players.\n")
-			return
+			return false
 		}
 
 		let arePlayersDataOk = this.data.checkPlayerNamesBeforeLock()
 		switch(arePlayersDataOk) {
 			case "same name": 
 				alert("Players with same name in tournament.\nParticipants will be confused.\nPlease, repair.");
-				return
+				return false
 			case "too long":
 				alert("Some player name is too long.\n(max:255 bytes, consider single character can have up to 4 bytes)");
-				return
+				return false
 			case "wrong utf8":
 				alert("Some problem with names.\nDid you copy-paste some data ?");
-				return
+				return false
 			default:
 				;
 		}
 				
 
-		// TODO: change logic of next questions, probably needs some better UI widgets
-		if (!this.data.tournamentInfo.werePlayersRandomized) {
-			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
-				return
+		if (!this.data.tournamentInfo.autoShuffleOrderOfPlayers &&
+			!this.data.tournamentInfo.werePlayersRandomized) 
+		{
+			if (!confirm("The order of players should be shuffled.\nDo you want to proceed without randomizing the order ?")) {
+				return false
 			}
 		}
-		// TODO: confirm final standing criteria before lock
 		// TODO: info about Bye is being added if num of players is odd
-
-		// Update the standings table names (dynamic criteria)
-		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Add a "Bye" player if the number of players is odd
 		this.data.addByeIfNeeded();
 
 		this.updatePlayersTable();
 
+		// Update the standings table names (dynamic criteria)
+		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
+
 		// Generate pairings
-		this.generatePairings("Berger")
+		this.generatePairings()
 
 		// Create tabs for all rounds
 		for (let i = 1; i <= (this.data.rounds.length); i++) {
@@ -675,6 +346,8 @@ class Controller {
 		this.openRound(1);
 
 		this.saveToCookie()
+
+		return true
 	}
 
 	openRound(roundNumber) {
@@ -690,7 +363,9 @@ class Controller {
 
 	openTab(tabId) {
 		if (tabId === "tab4") {
-			this.calculateStandings();
+			if (this.wasPairingGenerated()) {
+				this.calculateStandings();
+			}
 		}
 
 		let tabs = $('.tab-content');
@@ -724,19 +399,19 @@ class Controller {
 		// this triggers on [true, false] or [false, true]
 		if ( evenNumOfPlayers !== (playersSoFar % 2 === 0) ) 
 		{
-			players.push({"name": "Wildcard Player", "Elo": 2300 })
+			players.push({"name": "Wildcard Player 1", "Elo": 2300 })
 		}
 
 		players.forEach(player => {
 			// batch mode
-			this.addPlayerToTable_2(player.name, player.Elo, true);
+			this.addPlayerToTable(player.name, player.Elo, true);
 		})
 		
 		this.updatePlayersTable();
 	}
 
-	generatePairings(method) {
-		this.data.generatePairings(method)
+	generatePairings() {
+		this.data.generatePairings()
 
 		this.setCookie(this.data.tournamentInfo.id)
 	}
@@ -805,15 +480,18 @@ class Controller {
 
 	_loadAllPart2(data_loaded) {
 		// Apply all data to DOM	
-
-		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
-		this.clearCrosstableTab(); // Clear existing cross table
-
 		this.data.players = data_loaded.players;
 		this.data.rounds = data_loaded.rounds;
 		this.data.tournamentInfo = data_loaded.tournamentInfo;
 	
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
+
+		this.wasPairingGenerated() ?
+			$(".pairing-not-generated").removeClass("show") :
+			$(".pairing-not-generated").addClass("show")
+
+		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
+		this.clearCrosstableTab(); // Clear existing cross table
 
 		// Update the standings table names
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
@@ -830,6 +508,15 @@ class Controller {
 		
 		// Update the result values based on the loaded rounds data
 		this.updateResultsTab();
+
+		const ti = this.data.tournamentInfo
+		this.insertOtherTournamentData({
+			'title' : ti.title,
+			'date' : ti.date,
+			'location_': ti.location_,
+			'doubleRounded': ti.doubleRounded,
+			'autoShuffleOrderOfPlayers' : ti.autoShuffleOrderOfPlayers
+		})
 
 		// lock widgets if pairing was generated
 		if (this.data.rounds.length) {
@@ -869,19 +556,7 @@ class Controller {
 	// ************************************************************
 	// Players Tab(le)
 
-	// HTML API
-	addPlayerToTable() {
-		// Add player & ELO to the table
-		let name = $("#name").val();
-		let Elo = $("#Elo").val();
-		if (!Elo) {
-			Elo = 0; // Default Elo value, means No rating
-		}
-		// allow empty player added, name and rating can be edited 
-		this.addPlayerToTable_2(name, Elo)
-	}
-
-	addPlayerToTable_2(name, Elo, batchMode=false) {
+	addPlayerToTable(name, rating, batchMode=false) {
 		// restrictions for players moved to lockAndPairing
 		// check at least same player names here
 		if (name.length !== 0) {
@@ -900,28 +575,63 @@ class Controller {
 
 		let table = $("#dataTable tbody");
 
-		this.createRowWithPlayer(table, { 'name': name, 'Elo': Elo })
+		rating = Number(rating)
+		if (isNaN(rating)) {
+			rating = 0
+		}
+
+		this.createRowWithPlayer(table, { 'name': name, 'Elo': rating })
 
 		// Store in variable
-		this.data.addPlayer(name, Number(Elo))
-
-		// Clear input fields
-		$("#name").val("");
-		$("#Elo").val("");
+		this.data.addPlayer(name, rating)
 	}
 
 	// HTML API
-	removePlayer(button) {
+	removePlayer(button, appObj) {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
 		this.data.removePlayer(rowIndex)
 		row.parentNode.removeChild(row); // Remove row from table
+
+		appObj.checkPlayerTableLastField()
 	}
 
-	removePlayerByRowIdx(row) {
+	// HTML API
+	moveUpPlayer(button, appObj) {
+		let row = button.parentNode.parentNode;
+		let rowIndex = row.rowIndex - 1; // Adjust for header row
+
+		// TODO
+		console.log("TODO")
+		if (rowIndex > 0) {
+			;
+		}
+
+		appObj.checkPlayerTableLastField()
+	}
+
+	// HTML API
+	moveDownPlayer(button, appObj) {
+		let row = button.parentNode.parentNode;
+		let rowIndex = row.rowIndex - 1; // Adjust for header row
+
+		// TODO
+		console.log("TODO")
+		if (rowIndex < appObj.data.players.length-1) {
+			;
+		}
+
+		appObj.checkPlayerTableLastField()
+	}
+
+	removePlayerByRowIdx(row, sanitize=true) {
 		this.data.removePlayer(row)
 		let tableRow = this.getPlayerTableRow(row)
-		tableRow.remove(row); // Remove row from table
+		tableRow.remove(); // Remove row from table
+
+		if (sanitize) {
+			this.checkPlayerTableLastField()
+		}
 	}
 
 	// HTML API
@@ -936,11 +646,16 @@ class Controller {
 		this.updatePlayersTable();
 	}
 
-	// HTML API
-	clearPlayersTable() {
+	// HTML API (+ used from app)
+	clearPlayersTable(force=false) {
+		if (!force && 
+			!confirm("Do you really want to remove all players ?")) return
+	
 		let table = $("#dataTable tbody");
 		table.html(""); // Clear all rows
 		this.data.players = []; // Clear players array
+
+		this.checkPlayerTableLastField();
 	}
 	
 	updatePlayersTable() {
@@ -953,45 +668,67 @@ class Controller {
 	}
 
 	createRowWithPlayer(table, player) {
-			let newRow = $("<tr>")
-			let nameCell = $("<td>")
-			let EloCell = $("<td>")
-			let actionCell = $("<td>")
+		let appInst = this
+		let newRow = $("<tr>")
+		let nameCell = $("<td>")
+		let EloCell = $("<td>")
+		let actionCell = $("<td>")
 
-			nameCell.addClass("editablePlayerData")
-			EloCell.addClass("editablePlayerData")
+		nameCell.addClass("editablePlayerData")
+		EloCell.addClass("editablePlayerData")
 
-			actionCell.html('<button onclick="app.removePlayer(this)">Remove</button>');
+		let btnRemove = $("<button>")
+		btnRemove.on("click",
+			function(event) { appInst.removePlayer(this, appInst) })
+		btnRemove.html("Remove")
 
+		let btnMoveUp = $("<button>")
+		btnMoveUp.html("Up")
+		btnMoveUp.on("click",
+			function(event) { appInst.moveUpPlayer(this, appInst) })
 
-			var editableName = $("<input>");
-			editableName.attr("type", "text")
-			editableName.addClass("editablePlayerData")
-			nameCell.append(editableName)
+		let btnMoveDown = $("<button>")
+		btnMoveDown.html("Down")
+		btnMoveDown.on("click",
+			function(event) { appInst.moveDownPlayer(this, appInst) })
 
-			editableName.val(player.name)
-			editableName.on("input", 
-				function(event) { app.playerNameChanged(event, app) }
-			);
+		actionCell.append([btnRemove, btnMoveUp, btnMoveDown])
 
-			var editableRating = $("<input>");
-			editableRating.attr("type", "text")
-			editableRating.addClass("editablePlayerData")
-			EloCell.append(editableRating)
+		var editableName = $("<input>");
+		editableName.attr("type", "text")
+		editableName.addClass("editablePlayerData")
+		nameCell.append(editableName)
 
-			editableRating.val(player.Elo)
-			editableRating.on("input", 
-				function (event) { app.playerRatingChanged(event, app) }
-			);
+		editableName.val(player.name)
+		editableName.on("input", 
+			function(event) { appInst.playerNameChanged(event, appInst) }
+		);
 
-			newRow.append(nameCell, EloCell, actionCell)
-			table.append(newRow)
+		var editableRating = $("<input>");
+		editableRating.attr("type", "text")
+		editableRating.addClass("editablePlayerData")
+		EloCell.append(editableRating)
+
+		editableRating.val(player.Elo)
+		editableRating.on("input", 
+			function (event) { appInst.playerRatingChanged(event, appInst) }
+		);
+
+		newRow.append(nameCell, EloCell, actionCell)
+		table.append(newRow)
 	}
 
 	playerNameChanged(event, appObj) {
 		let idx = event.target.parentNode.parentNode.rowIndex - 1
 		appObj.data.players[idx].name = event.target.value
+
+		// if this is last row, add one empty row at end 
+		if (idx === event.target.parentNode.parentNode.parentNode.childNodes.length - 1) {
+			appObj.checkPlayerTableLastField()
+		}
+
 		appObj.saveToCookie()
+
 	}
 	
 	playerRatingChanged(event, appObj) {
@@ -1003,6 +740,7 @@ class Controller {
 	// Rounds Tab (also Results)
 	
 	createRoundTab(roundNumber) {
+		if (!this.wasPairingGenerated()) return
 		const roundTabs = $("#roundTabs");
 		const roundContents = $("#roundContents");
 
@@ -1076,6 +814,8 @@ class Controller {
 
 	// TODO: crosstable sorted by standing (a little bit tricky to code)
 	generateCrossTable() {
+		if (!this.wasPairingGenerated()) return
+
 		let table = $("#crossTable");
 		table.html(""); // Clear existing rows
 
@@ -1126,6 +866,7 @@ class Controller {
 	}
 
 	updateCrosstable(resultRow) {
+		if (!this.wasPairingGenerated()) return
 		let result = resultRow.result
 
 		// two coresponding fields in the table are updated
@@ -1137,24 +878,59 @@ class Controller {
 		let cell = table.find(`tr:nth-of-type(${ind1+1}) td:nth-of-type(${ind2 + 2})`)
 		let reverseCell = table.find(`tr:nth-of-type(${ind2+1}) td:nth-of-type(${ind1 + 2})`)
 
+		const rc = new ResultConversions()
+
+		// mitigation no.1 :-(
+		let oldTextCell = cell.text().replace("½","&frac12;")
+		let oldTextReverseCell = reverseCell.text().replace("½","&frac12;")
+
+		// mitigation no.2 :-(
+		if (oldTextCell === "-") oldTextCell = ""
+		if (oldTextReverseCell === "-") oldTextReverseCell = ""
+		
+		let newTextCell = ""
+		let newTextReverseCell = ""
+
 		switch(result) {
 			case"-": 
-				cell.text("");
-				reverseCell.text("");
+				//cell.text("");
+				//reverseCell.text("");
 				break;
 			case "1":
 			case "0":
 			case "0.5":
-				cell.html(resultToHtml(result));
-				reverseCell.html(resultToHtml(invertedResult(result)))
+
+				newTextCell = rc.resultToHtml(result)
+				newTextReverseCell = rc.resultToHtml(rc.invertedResult(result))
 				break
 			case "0-0":
-				cell.text("0");
-				reverseCell.text("0");
+				newTextCell = "0"
+				newTextReverseCell = "0"
+
 				break
 			default: 
+				newTextCell = "?"
+				newTextReverseCell = "?"
 				console.warn("unknown result: '" + result + "'");
 		}
+
+		let space = ""
+		let res = ""
+		space = (oldTextCell === "" || newTextCell === "") ?
+			"" : "&nbsp;"
+
+		res = oldTextCell + space + newTextCell
+		// mitigation no.3 :-(
+		if (res === "") res = "-"
+		cell.html(res)
+
+		space = (oldTextReverseCell === "" || newTextReverseCell === "") ?
+			"" : "&nbsp;"
+
+		res = oldTextReverseCell + space + newTextReverseCell
+		if (res === "") res = "-"
+		reverseCell.html(res)
+
 	}
 	// ************************************************************
 	// results
@@ -1170,6 +946,7 @@ class Controller {
 
 	// Update the result values based on the loaded rounds data
 	updateResultsTab() {
+		if (!this.wasPairingGenerated()) return
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
 				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
@@ -1191,6 +968,7 @@ class Controller {
 	}
 	
 	calculateStandings() {
+		if (!this.wasPairingGenerated()) return
 		let standings = this.data.calculateStandings()
 
 		// Update the standings table
@@ -1221,6 +999,8 @@ class Controller {
 	}
 
 	updateStandingTableNames(criteriaResolvers) {
+		//if (!this.wasPairingGenerated()) return
+
 		// dynamicly adds final standing criteria names to Standing Table
 		let table_th = $("#standingsTable thead");
 
@@ -1307,12 +1087,13 @@ class Controller {
 	// ************************************************************
 	// some test functions
 
-	generateTestResults(fullResults=true) {
+	generateTestResults(completeTournament=true) {
 		const results = ["1", "0.5", "0"];
 		//const results = ["1", "0.5", "0", "0-0"];
 
 		let numOfResultRoundsSet = this.data.rounds.length
-		if (!fullResults) {
+
+		if (!completeTournament) {
 			numOfResultRoundsSet = Math.floor(numOfResultRoundsSet/2)
 		}
 
@@ -1331,12 +1112,23 @@ class Controller {
 		this.updateResultsTab();
 	}
 
-	demo(evenPlayers=true, fullResults=true) {
+	demo(evenPlayers=true, completeTournament=true) {
+		this.insertOtherTournamentData({
+			'title' : 'Fictional Tournament',
+			'date': '4th Sixteenber, 6044',
+			'location_': 'Parallel Universe Gama',
+	//		'doubleRounded': false,
+			'autoShuffleOrderOfPlayers': true
+		})
+		this.retrieveOtherTournamentData()
+		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
-		this.lockAndPairing();
+		if (!this.lockAndPairing()) {
+			return
+		}
 
-		this.generateTestResults(fullResults);
+		this.generateTestResults(completeTournament);
 		this.saveToCookie()
 
 		this.openTab('tab3');
@@ -1344,6 +1136,7 @@ class Controller {
 
 	debugLoadCookie(evenPlayers=true, paired=true) {
 		this.clearAll()
+		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		if (! paired) {
 			this.saveToCookie()
@@ -1380,13 +1173,23 @@ class Controller {
 		
 		$("#feedback").val("Thank You.");
 	}
+
+	// HTML API
+	criteriaInfo() {
+		alert(
+`Additional criteria:\n
+Berger Score - Calculated as full total final score from player you win with, and half final score from player you draw with. No score, if you lost.\n
+Mutual Score - In case some players have same score, only results among them are considered.\n
+More Wins - More fighting players are prefered, but that is discutable, as there are many draws after fierce battle.`)
+	}
 }
 
 function sanitizeInput(input) {
     return input.replace(/[^a-zA-Z0-9À-ž .,:;!?'\n\r\[\](){}-]/g, '');
 }
 
-window.Controller = Controller
-window.Tournament = Tournament
-
+if (typeof window !== 'undefined') {
+	window.Controller = Controller
+	window.Tournament = Tournament
+}
 

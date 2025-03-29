@@ -119,9 +119,22 @@ export class FeatPersistentCookie {
 				res.results = se.deserialize_bitstream(arr, idx, FeatPersistentCookie.CURRENT_BITSIZE)
 
 				// add mising fields from later versions:
-				// TODO
+
+				// fix name:
+				res.tournamentInfo.pairingVersion = res.pairing_version
+				
+				// this one was not sufficient in version 1
+				// case: players are added, pairing generated, but no result
+				//   after resfresh, state is restored to not generated,
+				//   pairing will be same, but there is devil option 'randomize players',
+				//   if pressed,  pairing will be defferent
 				res.tournamentInfo.wasPairingGenerated = !!res.results.length
 
+				res.tournamentInfo.doubleRounded = false
+				res.tournamentInfo.autoShuffleOrderOfPlayers = true
+				res.tournamentInfo.themeNumber = 0
+
+				// TODO (when new data are added)
 				return res
 			}
 			case 2: {
@@ -143,6 +156,8 @@ export class FeatPersistentCookie {
 
 	loadAll(cookie_name) {
 		let data = new CookiesWrapper().load_base64_from_cookie(cookie_name)
+
+		if (data === null) return null
 
 		let res = this.deserialize_tournament_data(data)
 
