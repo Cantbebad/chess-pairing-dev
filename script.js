@@ -28,7 +28,7 @@ function debugGetCallingStack() {
 // ************************************************************
 
 
-class Controller {
+export class Controller {
 	static COOKIE_ID = "tournament-id="
 
 	constructor(tournament_data) {
@@ -122,6 +122,16 @@ class Controller {
 
 	setCookie(tournament_id) {
 		if(CookieConsent.acceptedCategory('Tournament')){
+			try {
+				if (document.constructor.name === 'NodeDocument484948494849') {
+					// when we are in NodeJs 
+					document.cookie[Controller.COOKIE_ID] = tournament_id	
+					return
+				}
+			}
+			catch(e) {
+				console.log("error in setting cookie: " + e)
+			}
 			document.cookie= `${Controller.COOKIE_ID}${tournament_id}; max-age=999999;`
 		}
 	}
@@ -1182,7 +1192,8 @@ function sanitizeInput(input) {
     return input.replace(/[^a-zA-Z0-9À-ž .,:;!?'\n\r\[\](){}-]/g, '');
 }
 
-window.Controller = Controller
-window.Tournament = Tournament
-
+if (typeof window !== 'undefined') {
+	window.Controller = Controller
+	window.Tournament = Tournament
+}
 
