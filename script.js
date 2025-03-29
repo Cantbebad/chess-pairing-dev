@@ -87,10 +87,14 @@ export class Controller {
 				preparedData.players = cookie_data.players.map(p => { 
 					return {'name' : p.name, 'Elo' : p.rating} })
 
+				preparedData.rounds = []
+
 				if (cookie_data.results.length || 
 					cookie_data.tournamentInfo.wasPairingGenerated) {
 
-					this.data.generatePairingsForCookieLoad(data.players.length)
+						preparedData.rounds = this.data.generateCorePairingIdx(
+							cookie_data.players.length,
+							cookie_data.tournamentInfo.doubleRounded)
 				}
 
 				// recreate results
