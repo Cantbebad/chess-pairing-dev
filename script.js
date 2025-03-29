@@ -108,6 +108,41 @@ class Tournament {
 		this.players.splice(idx, 1); // Remove from players array
 		this.saveToCookie()
 	}
+
+	_isSameNamePlayer() {
+		let areSame = false
+		this.players.forEach((player1, idx1) => {
+			this.players.forEach((player2, idx2) => {
+				if (idx1 !== idx2 && player1.name === player2.name) {
+					areSame = true
+				}
+			})
+		})
+		return areSame
+	}
+
+	_isPlayerNameTooLong(name) {
+		// can throw
+		// need bytes length, if utf-8 string
+		return new TextEncoder().encode(name).length > 255
+	}
+
+	checkPlayerNamesBeforeLock() {
+		if (this._isSameNamePlayer()) return "same name"
+		try {
+			if (this.players.some((player =>  { 
+				return this._isPlayerNameTooLong(player.name)
+			}))
+			) {
+				return "too long"	
+			}
+		}
+		catch(e) {
+			console.log(e)
+			return "wrong utf8"
+		}
+		return ""
+	}
 	
 	lookupPlayerIndex(name) {
 	    // return index of requested player
@@ -147,7 +182,7 @@ class Tournament {
 	addByeIfNeeded() {
 	    // Add a "Bye" player if the number of players is odd
 	    if (this.players.length % 2 !== 0) {
-        	this.players.push({ name: "Bye", Elo: 1400 , bye: true});
+        	this.players.push({ name: "Bye", Elo: 0, bye: true});
     	}
 	}
 
@@ -546,18 +581,58 @@ class Controller {
 		document.getElementById("criteria").disabled = true;
 	}
 
+	getPlayerTableRow(idx) {
+		let rows = document.getElementById("dataTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+		if (idx > rows.length) return null
+		return rows[idx]
+	}
+
 	lockAndPairing() {
+		// trim player names -> input fields may contain only spaces, 
+		// special utf8 empty chars not considered
+		let toRemove = new Array()
+		this.data.players.forEach((player, index) => {
+			player.name = player.name.trim()
+			if (player.name === "") {
+				toRemove.push(index)
+			}
+		})
+
+		// remove empty fields 
+		toRemove.reverse().forEach(index => {
+			this.removePlayerByRowIdx(index)
+		})
+		
 		if (this.data.players.length < 2) {
-			alert("Not enought players")
+			alert("Not enought players.\n")
 			return
 		}
 
+		let arePlayersDataOk = this.data.checkPlayerNamesBeforeLock()
+		console.log(arePlayersDataOk)
+		switch(arePlayersDataOk) {
+			case "same name": 
+				alert("Players with same name in tournament.\nParticipants will be confused.\nPlease, repair.");
+				return
+			case "too long":
+				alert("Some player name is too long.\n(max:255 bytes, consider single character can have up to 4 bytes)");
+				return
+			case "wrong utf8":
+				alert("Some problem with names.\nDid you copy-paste some data ?");
+				return
+			default:
+				;
+		}
+				
+
+		// TODO: change logic of next questions, probably needs some better UI widgets
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
 				return
 			}
 		}
 		// TODO: confirm final standing criteria before lock
+		// TODO: info about Bye is being added if num of players is odd
 
 		// Update the standings table names (dynamic criteria)
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
@@ -613,7 +688,7 @@ class Controller {
 		}
 	}
 
-	importDemo(confirmed = false) {
+	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
 		let players = [
 			{"name": "Magnus", "Elo": 2833},
 			{"name": "Fabiano", "Elo": 2803},
@@ -626,6 +701,14 @@ class Controller {
 			{"name": "Ian", "Elo": 2754},
 			{"name": "Anand", "Elo": 2750}
 		]
+
+		// user could have added some players manually already
+		let playersSoFar = this.data.players.length + players.length
+		// this triggers on [true, false] or [false, true]
+		if ( evenNumOfPlayers !== (playersSoFar % 2 === 0) ) 
+		{
+			players.push({"name": "Wildcard Player 1", "Elo": 2700 })
+		}
 
 		players.forEach(player => {
 			// batch mode
@@ -775,34 +858,26 @@ class Controller {
 		let name = document.getElementById("name").value;
 		let Elo = document.getElementById("Elo").value;
 		if (!Elo) {
-			Elo = 1400; // Default Elo value
+			Elo = 0; // Default Elo value, means No rating
 		}
-		if (name && Elo) {
-			this.addPlayerToTable_2(name, Elo)
-		} else {
-			alert("Please enter name.");
-		}
+		// allow empty player added, name and rating can be edited 
+		this.addPlayerToTable_2(name, Elo)
 	}
 
-	addPlayerToTable_2(name, Elo, batch=false) {
-		// check same player name
-		if (this.data.players.some((player) => player.name === name)) {
-			// skip alert silently if in batch mode
-			if (!batch) {
-				alert("Player with same name already in tournament");
+	addPlayerToTable_2(name, Elo, batchMode=false) {
+		// restrictions for players moved to lockAndPairing
+		// check at least same player names here
+		if (!batchMode && name.length !== 0) {
+			// 
+			if (this.data.players.some(player => { return player.name === name })) {
+				alert("Player with same name in tournament")
+				return
 			}
-			return
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
-		let newRow = table.insertRow();
-		let nameCell = newRow.insertCell(0);
-		let EloCell = newRow.insertCell(1);
-		let actionCell = newRow.insertCell(2);
-
-		nameCell.textContent = name;
-		EloCell.textContent = Elo;
-		actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+		
+		this.createRowWithPlayer(table, { 'name': name, 'Elo': Elo })
 
 		// Store in variable
 		this.data.addPlayer(name, Number(Elo))
@@ -812,6 +887,7 @@ class Controller {
 		document.getElementById("Elo").value = "";
 	}
 
+	// HTML API
 	removePlayer(button) {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
@@ -819,16 +895,25 @@ class Controller {
 		row.parentNode.removeChild(row); // Remove row from table
 	}
 
+	removePlayerByRowIdx(row) {
+		this.data.removePlayer(row)
+		let tableRow = this.getPlayerTableRow(row)
+		tableRow.remove(row); // Remove row from table
+	}
+
+	// HTML API
 	sortPlayers() {
 		this.data.sortPlayers() // Sort players by Elo in descending order
 		this.updatePlayersTable();
 	}
 
+	// HTML API
 	randomizePlayers() {
 		this.data.randomizePlayers();
 		this.updatePlayersTable();
 	}
 
+	// HTML API
 	clearPlayersTable() {
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
 		table.innerHTML = ""; // Clear all rows
@@ -840,18 +925,57 @@ class Controller {
 		table.innerHTML = ""; // Clear existing rows
 
 		this.data.players.forEach(player => {
+			this.createRowWithPlayer(table, player)
+		});
+	}
+
+	createRowWithPlayer(table, player) {
 			let newRow = table.insertRow();
 
 			let nameCell = newRow.insertCell(0);
+			nameCell.className = "editablePlayerData"
+
 			let EloCell = newRow.insertCell(1);
+			EloCell.className = "editablePlayerData"
+
 			let actionCell = newRow.insertCell(2);
 
-			nameCell.textContent = player.name;
-			EloCell.textContent = player.Elo;
+			var editableName = document.createElement("input");
+			editableName.type = "text"
+			editableName.className = "editablePlayerData"
+			nameCell.appendChild(editableName)
+
+			editableName.value = player.name
+			editableName.addEventListener("input", 
+				(event) => this.playerNameChanged(event  , this));
+
+			var editableRating = document.createElement("input");
+			editableRating.type = "text"
+			editableRating.className = "editablePlayerData"
+			EloCell.appendChild(editableRating)
+
+			editableRating.value = player.Elo
+			editableRating.addEventListener("input", 
+				(event) => this.playerRatingChanged(event  , this));
+
+			//nameCell.textContent = player.name;
+			//EloCell.textContent = player.Elo;
 			actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
-		});
+	}
+
+	playerNameChanged(event, appObj) {
+		let idx = event.target.parentNode.parentNode.rowIndex - 1
+		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
+		appObj.data.players[idx].name = event.target.value
+		appObj.saveToCookie()
 	}
 	
+	playerRatingChanged(event, appObj) {
+		let idx = event.target.parentNode.parentNode.rowIndex - 1
+		//console.log(`${event.type}: ${event.data}  ${event.target.value} ${idx}\n`)
+		appObj.data.players[idx].Elo = Number(event.target.value)
+		appObj.saveToCookie()
+	}
 	// ************************************************************
 	// Rounds Tab (also Results)
 	
@@ -876,6 +1000,7 @@ class Controller {
 		let html = `
 			<thead>
 				<tr>
+					<th>Board</th>
 					<th>Player 1</th>
 					<th>Player 2</th>
 					<th>Result</th>
@@ -888,6 +1013,7 @@ class Controller {
 			let player2Name = this.data.players[pair.player2Idx].name
 			html += `
 					<tr>
+						<td>${index+1}.</td>
 						<td>${player1Name}</td>
 						<td>${player2Name}</td>
 						<td>
@@ -1128,29 +1254,55 @@ class Controller {
 	// ************************************************************
 	// some test functions
 
-	generateTestResults() {
+	generateTestResults(fullResults=true) {
 		const results = ["1", "0.5", "0"];
 		//const results = ["1", "0.5", "0", "0-0"];
 
+		let numOfResultRoundsSet = this.data.rounds.length
+		if (!fullResults) {
+			numOfResultRoundsSet = Math.floor(numOfResultRoundsSet/2)
+		}
+
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
-				const random = Math.floor(Math.random() * results.length);
-				this.data.rounds[roundIndex][pairIndex].result = results[random]
+				if (roundIndex < numOfResultRoundsSet) {
+					const random = Math.floor(Math.random() * results.length);
+					this.data.rounds[roundIndex][pairIndex].result = results[random]
+				}
+				else {
+					this.data.rounds[roundIndex][pairIndex].result = '-'
+				}
 			});
 		});
 	
 		this.updateResultsTab();
 	}
 
-	testAll() {
-		this.importDemo(true);
+	demo(evenPlayers=true, fullResults=true) {
+		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
 		this.lockAndPairing();
 
-		this.generateTestResults();
+		this.generateTestResults(fullResults);
 		this.saveToCookie()
 
 		this.openTab('tab3');
+	}
+
+	debugLoadCookie(evenPlayers=true, paired=true) {
+		this.clearAll()
+		this.importDemoPlayers(evenPlayers, true);
+		if (! paired) {
+			this.saveToCookie()
+			// force refresh
+			//window.location.reload()
+			return
+		}
+		this.randomizePlayers();
+		this.lockAndPairing();
+		
+		// force refresh
+		//window.location.reload()
 	}
 
 	async sendFeedback() {
