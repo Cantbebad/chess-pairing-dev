@@ -533,6 +533,7 @@ class Controller {
 		}
 
 		this.clearAll()
+		this.openTab('tab1')
 	}
 
 	clearAll() {
@@ -553,32 +554,30 @@ class Controller {
 	}
 
 	unlockWidgets() {
-		document.getElementById("name").disabled = false;
-		document.getElementById("Elo").disabled = false;
+		$("#name").prop('disabled', false);
+		$("#Elo").prop('disabled', false);
 
 		// Enable buttons
-		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
-			button.disabled = false;
-		});
+		$('#tab1 .button-container button').prop('disabled', false);
+		$('#addBtn').prop('disabled', false)
 		
 		// Optionally, add a visual indication that the table is locked
-		document.getElementById("dataTable").classList.remove('locked');
-		document.getElementById("criteria").disabled = false;
+		$("#dataTable").removeClass('locked');
+		$("#criteria").prop('disabled', false);
 	}
 
 	lockWidgets() {
 		// Disable input fields
-		document.getElementById("name").disabled = true;
-		document.getElementById("Elo").disabled = true;
+		$("#name").prop('disabled', true);
+		$("#Elo").prop('disabled', true);
 
 		// Disable buttons
-		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
-			button.disabled = true;
-		});
+		$('#tab1 .button-container button').prop('disabled', true);
+		$('#addBtn').prop('disabled', true)
 		
 		// Optionally, add a visual indication that the table is locked
-		document.getElementById("dataTable").classList.add('locked');
-		document.getElementById("criteria").disabled = true;
+		$("#dataTable").addClass('locked');
+		$("#criteria").prop('disabled', true);
 	}
 
 	getPlayerTableRow(idx) {
@@ -664,28 +663,29 @@ class Controller {
 	}
 
 	openRound(roundNumber) {
-		const roundTabs = document.querySelectorAll(".round-tab");
-		const roundContents = document.querySelectorAll(".round-content");
+		const roundTabs = $(".round-tab");
+		const roundContents = $(".round-content");
 
-		roundTabs.forEach(tab => tab.classList.remove("active"));
-		roundContents.forEach(content => content.classList.remove("active"));
+		roundTabs.removeClass('active');
+		roundContents.removeClass('active');
 
-		document.querySelector(`.round-tab:nth-child(${roundNumber})`).classList.add("active");
-		document.getElementById(`round${roundNumber}`).classList.add("active");
+		$(`.round-tab:nth-child(${roundNumber})`).addClass("active");
+		$(`#round${roundNumber}`).addClass("active");
 	}
 
 	openTab(tabId) {
-		let tabs = document.querySelectorAll('.tab-content');
-		let tabButtons = document.querySelectorAll('.tab');
-
-		tabs.forEach(tab => tab.classList.remove('active'));
-		tabButtons.forEach(tab => tab.classList.remove('active'));
-
-		document.getElementById(tabId).classList.add('active');
-		document.querySelector(`.tab-container .tab[onclick="app.openTab('${tabId}')"]`).classList.add('active');
 		if (tabId === "tab4") {
 			this.calculateStandings();
 		}
+
+		let tabs = $('.tab-content');
+		let tabButtons = $('.tab');
+
+		tabs.removeClass('active');
+		tabButtons.removeClass('active');
+
+		$(`#${tabId}`).addClass('active');
+		$(`.tab-container #head_${tabId}`).addClass('active');
 	}
 
 	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
@@ -749,7 +749,7 @@ class Controller {
 
 		link.href = url;
 		link.download = "tournament-" + this.data.tournamentInfo.id + ".json";
-		document.body.appendChild(link); //vlozi link do body dokumentu, neskor sa nan programom klikne
+		document.body.append(link); //vlozi link do body dokumentu, neskor sa nan programom klikne
 		link.click(); //simuluje click to anchor element
 		document.body.removeChild(link); // odstrani element z body dokumentu
 		URL.revokeObjectURL(url); // Clean up the URL object
@@ -855,8 +855,8 @@ class Controller {
 	// HTML API
 	addPlayerToTable() {
 		// Add player & ELO to the table
-		let name = document.getElementById("name").value;
-		let Elo = document.getElementById("Elo").value;
+		let name = $("#name").val();
+		let Elo = $("#Elo").val();
 		if (!Elo) {
 			Elo = 0; // Default Elo value, means No rating
 		}
@@ -883,8 +883,8 @@ class Controller {
 		this.data.addPlayer(name, Number(Elo))
 
 		// Clear input fields
-		document.getElementById("name").value = "";
-		document.getElementById("Elo").value = "";
+		$("#name").val("");
+		$("#Elo").val("");
 	}
 
 	// HTML API
@@ -915,14 +915,14 @@ class Controller {
 
 	// HTML API
 	clearPlayersTable() {
-		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
-		table.innerHTML = ""; // Clear all rows
+		let table = $("#dataTable tbody");
+		table.html(""); // Clear all rows
 		this.data.players = []; // Clear players array
 	}
 	
 	updatePlayersTable() {
-		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
-		table.innerHTML = ""; // Clear existing rows
+		let table = $("#dataTable tbody");
+		table.html(""); // Clear existing rows
 
 		this.data.players.forEach(player => {
 			this.createRowWithPlayer(table, player)
@@ -980,31 +980,33 @@ class Controller {
 	// Rounds Tab (also Results)
 	
 	createRoundTab(roundNumber) {
-		const roundTabs = document.getElementById("roundTabs");
-		const roundContents = document.getElementById("roundContents");
+		const roundTabs = $("#roundTabs");
+		const roundContents = $("#roundContents");
 
 		// Create round tab
-		const roundTab = document.createElement("div");
-		roundTab.className = "round-tab";
-		roundTab.innerText = `Round ${roundNumber}`;
-		roundTab.onclick = () => this.openRound(roundNumber); // Use captured round number
-		roundTabs.appendChild(roundTab);
+		const roundTab = $("<div>");
+		roundTab.addClass("round-tab")
+		roundTab.text(`Round ${roundNumber}`);
+		roundTab.on("click", function () { app.openRound(roundNumber)}); // Use captured round number
+		roundTabs.append(roundTab);
 
 		// Create round content
-		const roundContent = document.createElement("div");
-		roundContent.className = "round-content";
-		roundContent.id = `round${roundNumber}`;
-		roundContent.innerHTML = `<h3>Round ${roundNumber}</h3>`;
-		const table = document.createElement("table");
+		const roundContent = $("<div>");
+		roundContent.addClass("round-content");
+		roundContent.prop('id', `round${roundNumber}`);
+		roundContent.html(`<h3>Round ${roundNumber}</h3>`)
+		const table = $("<table>");
 		
 		let html = `
 			<thead>
+<<<<<<< HEAD
 				<tr>
 					<th>Board</th>
+=======
+>>>>>>> to_JQuery
 					<th>Player 1</th>
 					<th>Player 2</th>
 					<th>Result</th>
-				</tr>
 			</thead>
 			<tbody>`
 
@@ -1017,7 +1019,7 @@ class Controller {
 						<td>${player1Name}</td>
 						<td>${player2Name}</td>
 						<td>
-							<select onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
+							<select id="sel${roundNumber-1}_${index}" onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
 								<option value="-" selected> - </option>
 								<option value="1">1-0</option>
 								<option value="0">0-1</option>
@@ -1029,10 +1031,10 @@ class Controller {
 				`
 		});
 		html += "</tbody>"
-		table.innerHTML = html
+		table.html(html)
 
-		roundContent.appendChild(table);
-		roundContents.appendChild(roundContent);
+		roundContent.append(table);
+		roundContents.append(roundContent);
 		
 		this.openRound(roundNumber);
 	}
@@ -1047,39 +1049,54 @@ class Controller {
 	// crosstable
 	
 	clearCrosstableTab() {
-		let table = document.getElementById("crossTable");
-		table.innerHTML = ""; // Clear existing rows
+		let table = $("#crossTable");
+		table.html(""); // Clear existing rows
 	}
 
+	// TODO: crosstable sorted by standing (a little bit tricky to code)
 	generateCrossTable() {
-		let table = document.getElementById("crossTable");
+		let table = $("#crossTable");
+		table.html(""); // Clear existing rows
 
 		// Create the header row
-		let headerRow = table.insertRow();
-		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
-		this.data.players.forEach(player => {
-			let th = document.createElement("th");
-			th.textContent = player.name;
-			headerRow.appendChild(th);
+		//let headerRow = $("<thead>").append($("<tr>"))
+		let headerRow = $("<thead>")
+		headerRow.append($("<th>")); // Empty top-left corner
+
+		this.data.players.forEach(function(player) {
+			let th = null
+			th = $("<th>");
+			//th.css({ "writing-mode" : "vertical-rl", "text-orientation" : "mixed" })
+			th.text(player.name);
+			headerRow.append(th);
 		});
+
+		table.append(headerRow)
+
+		let tbody = $("<tbody>")
 
 		// Create rows for players
 		this.data.players.forEach((player, rowIndex) => {
-			let row = table.insertRow();
-			let nameCell = row.insertCell();
-			nameCell.textContent = player.name; // Player name in the first column
-			nameCell.style.fontWeight = "bold";
+			let row = $("<tr>")
+			let nameCell = $("<td>")
+			nameCell.text(player.name); // Player name in the first column
+			nameCell.css({ "fontWeight": "bold"})
+
+			row.append(nameCell)
 
 			this.data.players.forEach((opponent, colIndex) => {
-				let cell = row.insertCell();
+				let cell = $("<td>")
 				if (rowIndex === colIndex) {
-					cell.classList.add("empty"); // Empty cell for self-match
-					cell.textContent = "X";
+					cell.addClass("empty"); // Empty cell for self-match
+					cell.text("X");
 				} else {
-					cell.textContent = "-"; // Placeholder for match results
+					cell.text("-"); // Placeholder for match results
 				}
+				row.append(cell)
 			});
+			tbody.append(row)
 		});
+		table.append(tbody)
 	}
 
 	updateCrosstable(resultRow) {
@@ -1088,24 +1105,26 @@ class Controller {
 		// two coresponding fields in the table are updated
 		let ind1 = resultRow.player1Idx
 		let ind2 = resultRow.player2Idx
-		let table = document.getElementById("crossTable");
-		let cell = table.rows[ind1 + 1].cells[ind2 + 1];
-		let reverseCell = table.rows[ind2 + 1].cells[ind1 + 1];
+		let table = $("#crossTable tbody");
+		// nth starts from 1 !
+		// the first cell in row is player name
+		let cell = table.find(`tr:nth-of-type(${ind1+1}) td:nth-of-type(${ind2 + 2})`)
+		let reverseCell = table.find(`tr:nth-of-type(${ind2+1}) td:nth-of-type(${ind1 + 2})`)
 
 		switch(result) {
 			case"-": 
-				cell.innerText = "";
-				reverseCell.innerText = "";
+				cell.text("");
+				reverseCell.text("");
 				break;
 			case "1":
 			case "0":
 			case "0.5":
-				cell.innerText = result;
-				reverseCell.innerText = invertedResult(result)
+				cell.text(result);
+				reverseCell.text(invertedResult(result))
 				break
 			case "0-0":
-				cell.innerText = "0";
-				reverseCell.innerText = "0";
+				cell.text("0");
+				reverseCell.text("0");
 				break
 			default: 
 				console.warn("unknown result: '" + result + "'");
@@ -1115,12 +1134,12 @@ class Controller {
 	// results
 	
 	clearResultsTab() {
-		const roundTabs = document.getElementById("roundTabs");
-		const roundContents = document.getElementById("roundContents");
+		const roundTabs = $("#roundTabs");
+		const roundContents = $("#roundContents");
 
 		// Clear existing round tabs and contents
-		roundTabs.innerHTML = "";
-		roundContents.innerHTML = "";
+		roundTabs.html("");
+		roundContents.html("");
 	}
 
 	// Update the result values based on the loaded rounds data
@@ -1128,9 +1147,9 @@ class Controller {
 		this.data.rounds.forEach((round, roundIndex) => {
 			round.forEach((pair, pairIndex) => {
 				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
-				let selectElement = document.querySelector(`#round${roundIndex + 1} select[onchange="app.updateResult(${roundIndex}, ${pairIndex}, this.value)"]`);
+				let selectElement = $(`#round${roundIndex + 1} #sel${roundIndex}_${pairIndex}`);
 				if (selectElement) {
-					selectElement.value = result;
+					selectElement.val(result);
 				}
 				this.updateCrosstable(this.data.rounds[roundIndex][pairIndex])
 			});
@@ -1141,48 +1160,55 @@ class Controller {
 	// standings
 	
 	clearStandingsTab() {
-		let table = document.getElementById("standingsTable").getElementsByTagName('tbody')[0];
-		table.innerHTML = ""; // Clear existing rows
+		let table = $("#standingsTable tbody");
+		table.html(""); // Clear existing rows
 	}
 	
 	calculateStandings() {
 		let standings = this.data.calculateStandings()
 
 		// Update the standings table
-		let table = document.getElementById("standingsTable").getElementsByTagName('tbody')[0];
-		table.innerHTML = ""; // Clear existing rows
+		let table = $("#standingsTable tbody");
+		table.html(""); // Clear existing rows
 		for (let i = 0; i < standings.length; i++) {
-			let newRow = table.insertRow();
-			let numberCell = newRow.insertCell(0);
-			let nameCell = newRow.insertCell(1);
-			let eloCell = newRow.insertCell(2);
-			let pointsCell = newRow.insertCell(3);
-			numberCell.textContent = i + 1;
-			nameCell.textContent = standings[i].name;
-			eloCell.textContent = standings[i].elo;
-			pointsCell.textContent = standings[i].points;
+			let newRow = $("<tr>")
+			let numberCell = $("<td>")
+			let nameCell = $("<td>")
+			let eloCell = $("<td>")
+			let pointsCell = $("<td>")
+			numberCell.text(i + 1);
+			nameCell.text(standings[i].name);
+			eloCell.text(standings[i].elo);
+			pointsCell.text(standings[i].points);
+
+			newRow.append(numberCell, nameCell, eloCell, pointsCell)
 
 			for (let idx = 0; 
 				idx < this.data.tournamentInfo.finalStandingsResolvers.length; 
 				idx++) {
-				let criteriaCell = newRow.insertCell(4+idx);
-				criteriaCell.textContent = standings[i].additionalCriteria[idx];
+				let criteriaCell = $("<td>")
+				criteriaCell.text(standings[i].additionalCriteria[idx]);
+				newRow.append(criteriaCell)
 			}
+			table.append(newRow)
 		}
 	}
 
 	updateStandingTableNames(criteriaResolvers) {
 		// dynamicly adds final standing criteria names to Standing Table
-		let table_tr = document.getElementById("standingsTable").getElementsByTagName('tr')[0];
+		let table_th = $("#standingsTable thead");
 
 		// first shrink to predefined static names
-		while(table_tr.children.length > 4) {
-			table_tr.removeChild(table_tr.lastChild)
+		let toRemove = table_th.find("th").length - 4 
+		for (let i=0; i< toRemove; i++) {
+			table_th.find("th").last().remove()
 		}
 
+		let row = $("#standingsTable thead tr")
 		criteriaResolvers.forEach(crit => {
-			let elem = document.createElement("th")
-			table_tr.appendChild(elem).textContent= getCriteriumVisibleName(crit)
+			let elem = $("<th>")
+			elem.text(getCriteriumVisibleName(crit))
+			row.append(elem) 
 		})
 	}
 
@@ -1199,7 +1225,7 @@ class Controller {
 		let link = document.createElement("a");
 		link.setAttribute("href", encodedUri);
 		link.setAttribute("download", "players.csv");
-		document.body.appendChild(link); // Required for FF
+		document.body.append(link); // Required for FF
 		link.click();
 		document.body.removeChild(link); // Clean up
 	}
@@ -1246,7 +1272,8 @@ class Controller {
 	updateCriteriaForm(criterium) {
 		Tournament.criteriaList.forEach((item, idx) => {
 			if (item.join() === criterium.join()) {
-				document.getElementById("criteria").selectedIndex = idx;
+				// this works as is
+				$("#criteria").selectedIndex = idx;
 			}
 		})
 	}
@@ -1306,7 +1333,7 @@ class Controller {
 	}
 
 	async sendFeedback() {
-		const feedback_text = sanitizeInput(document.getElementById("feedback").value);
+		const feedback_text = sanitizeInput($("#feedback").val());
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
@@ -1325,7 +1352,7 @@ class Controller {
     	  .then((result) => console.log(result))
     	  .catch((error) => console.error(error));
 		
-		document.getElementById("feedback").value = "Thank You.";
+		$("#feedback").val("Thank You.");
 	}
 }
 

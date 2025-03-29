@@ -21,10 +21,15 @@
 		  "./BitStream.js": "./modules/BitStream.js",
 		  "./DullSerializer.js": "./modules/DullSerializer.js",
 		  "./CookiesWrapper.js": "./modules/CookiesWrapper.js",
-		  "./modules/FeatPersistentCookie.js": "./modules/FeatPersistentCookie.js" 
+		  "./modules/FeatPersistentCookie.js": "./modules/FeatPersistentCookie.js",
+		  "jquery" : "./static/jquery/jquery.js" 
 		}
 	  }
 	</script>
+	<script type="module" src="static/jquery/jquery.js"></script>
+	<script type="module" src="static/jquery-ui/jquery-ui.js"></script>
+	<script type="module" src="jquery-loader.js"></script>
+	<!-- <link rel="stylesheet" href="static/jquery-ui/jquery-ui.css"/> -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3.1.0/dist/cookieconsent.css" />
     <link rel="icon" href="favicon.png" type="image/png" />
 	<script type="module" src="script.js"></script>
@@ -55,12 +60,12 @@
 <body>
     <!-- Tabs -->
     <div class="tab-container">
-        <div class="tab active" onclick="app.openTab('tab1')">Players</div>
-        <div class="tab" onclick="app.openTab('tab2')">Pairing</div>
-        <div class="tab" onclick="app.openTab('tab3')">Crosstable</div>
-        <div class="tab" onclick="app.openTab('tab4')">Standing</div>
-        <div class="tab" onclick="app.openTab('tab4_5')">Settings</div>
-        <div class="tab" onclick="app.openTab('tab5')">About</div>
+        <div class="tab" id="head_tab1" active onclick="app.openTab('tab1')">Players</div>
+        <div class="tab" id="head_tab2" onclick="app.openTab('tab2')">Pairing</div>
+        <div class="tab" id="head_tab3" onclick="app.openTab('tab3')">Crosstable</div>
+        <div class="tab" id="head_tab4" onclick="app.openTab('tab4')">Standing</div>
+        <div class="tab" id="head_tab4_5" onclick="app.openTab('tab4_5')">Settings</div>
+        <div class="tab" id="head_tab5" onclick="app.openTab('tab5')">About</div>
     </div>
 
     <!-- Tab 1: Add Player to Table -->
@@ -68,7 +73,7 @@
         <h2>Add Player to Table</h2>
         <input type="text" id="name" placeholder="Enter name" required>
         <input type="number" id="Elo" placeholder="Enter Elo" required>
-        <button onclick="app.addPlayerToTable()">Add</button>
+        <button id='addBtn' onclick="app.addPlayerToTable()">Add</button>
         <div class="button-container">
             <button onclick="app.sortPlayers()">Sort Players</button>
             <button onclick="app.randomizePlayers()">Randomize Players</button>
@@ -76,8 +81,11 @@
             <button onclick="app.exportToCSV()">Save Players</button>
             <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
             <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
-            <button onclick="app.lockAndPairing()">Lock & Start Pairing</button>
-		</div>
+            <button onclick="app.importDemo()">Load Demo Players</button>
+            <button onclick="app.testAll()">Full Demo</button>
+            <button onclick="app.lockAndPairing()">Lock &amp; Start Pairing</button>
+
+        </div>
 
         <table id="dataTable">
             <thead>
@@ -142,13 +150,13 @@
         <h2>Standing</h2>
         <table id="standingsTable">
             <thead>
-                <tr>
+				<tr>
                     <th>Number</th>
                     <th>Player</th>
                     <th>Elo</th>
                     <th>Points</th>
 					<!-- Additional criteria headers will be added here -->
-                </tr>
+				</tr>
             </thead>
             <tbody>
                 <!-- Standings will be populated here -->
