@@ -105,6 +105,23 @@ export class Tournament {
 			console.log(e)
 		}
 	}
+
+	getExtraPairingCount() {
+		if (! this.players.length) throw new Error("fn called in wrong context")	
+		return Math.ceil(this.rounds.length/this.players.length)
+	}
+
+	getExtraPairingIdx(round) {
+		// this gets index for Crosstable for extra pairings
+		// 'round' begins at 1
+		//
+		// extra pairing 0 (index 0) is "normal" pairing 
+		// index 0,1 are for double-rounded pairing
+		// extra pairing 2,4,6... will be same as 0
+		// extra pairing 3,5,7... will be same as 1
+		if (! this.players.length) throw new Error("fn called in wrong context")
+		return Math.floor(round/this.players.length)
+	}
 		
 	generateRandomId() {
 		// generate random hex string

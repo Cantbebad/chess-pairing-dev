@@ -804,7 +804,10 @@ export class Controller {
 
 	updateResult(roundIndex, pairIndex, result) {
 		this.data.setResult(roundIndex, pairIndex, result);
-		this.updateCrosstable(this.data.rounds[roundIndex][pairIndex]);
+		this.updateCrosstable(
+			this.data.rounds[roundIndex][pairIndex],
+			this.data.getExtraPairingIdx(roundIndex+1)
+		);
 	}
 
 
@@ -869,11 +872,9 @@ export class Controller {
 		table.append(tbody)
 	}
 
-	updateCrosstable(resultRow) {
+	updateCrosstable(resultRow, extraPairingIdx) {
 		if (!this.wasPairingGenerated()) return
 		let result = resultRow.result
-
-		// TODO: double rounded - does not change correctly, when result is changed
 
 		// two coresponding fields in the table are updated
 		let ind1 = resultRow.player1Idx
@@ -886,16 +887,38 @@ export class Controller {
 
 		const rc = new ResultConversions()
 
-		// mitigation no.1 :-(
-		let oldTextCell = cell.text().replace("½","&frac12;")
-		let oldTextReverseCell = reverseCell.text().replace("½","&frac12;")
+		// Using html space as delimiter for results from extra pairings
+		// html space is defined as char 160, not 32
+		const htmlSpace = "&#160;"  // == '&nbsp;'
+		const htmlSpaceChar = String.fromCharCode(160)
 
-		// mitigation no.2 :-(
-		if (oldTextCell === "-") oldTextCell = ""
-		if (oldTextReverseCell === "-") oldTextReverseCell = ""
-		
-		let newTextCell = ""
-		let newTextReverseCell = ""
+		const oldTextCell = cell.text()
+			.replace("½","&frac12;")
+
+		const oldTextReverseCell = reverseCell.text()
+			.replace("½","&frac12;")
+
+		let cellValues = oldTextCell.split(htmlSpaceChar)
+		let reverseCellValues = oldTextReverseCell.split(htmlSpaceChar)
+
+		const extraPairingCount = this.data.getExtraPairingCount()
+		// extend result values, if not initialized or extra pairing was added
+		for (let i = 0; i < extraPairingCount; ++i) {
+			if (cellValues.length < extraPairingCount) {
+				cellValues.push('')
+			}
+			else break
+		}
+
+		for (let i = 0; i < extraPairingCount; ++i) {
+			if (reverseCellValues.length < extraPairingCount) {
+				reverseCellValues.push('')
+			}
+			else break
+		}
+
+		let newValue = ""
+		let newReverseValue = ""
 
 		switch(result) {
 			case"-": 
@@ -906,36 +929,25 @@ export class Controller {
 			case "0":
 			case "0.5":
 
-				newTextCell = rc.resultToHtml(result)
-				newTextReverseCell = rc.resultToHtml(rc.invertedResult(result))
+				newValue = rc.resultToHtml(result)
+				newReverseValue = rc.resultToHtml(rc.invertedResult(result))
 				break
 			case "0-0":
-				newTextCell = "0"
-				newTextReverseCell = "0"
+				newValue = "0"
+				newReverseValue = "0"
 
 				break
 			default: 
-				newTextCell = "?"
-				newTextReverseCell = "?"
+				newValue = "?"
+				newReverseValue = "?"
 				console.warn("unknown result: '" + result + "'");
 		}
 
-		let space = ""
-		let res = ""
-		space = (oldTextCell === "" || newTextCell === "") ?
-			"" : "&nbsp;"
+		cellValues[extraPairingIdx] = newValue
+		reverseCellValues[extraPairingIdx] = newReverseValue
 
-		res = oldTextCell + space + newTextCell
-		// mitigation no.3 :-(
-		if (res === "") res = "-"
-		cell.html(res)
-
-		space = (oldTextReverseCell === "" || newTextReverseCell === "") ?
-			"" : "&nbsp;"
-
-		res = oldTextReverseCell + space + newTextReverseCell
-		if (res === "") res = "-"
-		reverseCell.html(res)
+		cell.html(cellValues.join(htmlSpace))
+		reverseCell.html(reverseCellValues.join(htmlSpace))
 
 	}
 	// ************************************************************
@@ -960,7 +972,10 @@ export class Controller {
 				if (selectElement) {
 					selectElement.val(result);
 				}
-				this.updateCrosstable(this.data.rounds[roundIndex][pairIndex])
+				this.updateCrosstable(
+					this.data.rounds[roundIndex][pairIndex], 
+					this.data.getExtraPairingIdx(roundIndex+1)
+				)
 			});
 		});
 	}
