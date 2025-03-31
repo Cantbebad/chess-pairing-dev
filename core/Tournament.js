@@ -107,8 +107,8 @@ export class Tournament {
 	}
 
 	getExtraPairingCount() {
-		if (! this.players.length) throw new Error("fn called in wrong context")	
-		return Math.ceil(this.rounds.length/this.players.length)
+		if (this.players.length < 2) throw new Error("fn called in wrong context")	
+		return Math.ceil(this.rounds.length/(this.players.length-1))
 	}
 
 	getExtraPairingIdx(round) {
@@ -119,8 +119,8 @@ export class Tournament {
 		// index 0,1 are for double-rounded pairing
 		// extra pairing 2,4,6... will be same as 0
 		// extra pairing 3,5,7... will be same as 1
-		if (! this.players.length) throw new Error("fn called in wrong context")
-		return Math.floor(round/this.players.length)
+		if (this.players.length < 2) throw new Error("fn called in wrong context")
+		return Math.ceil(round/(this.players.length-1)) - 1
 	}
 		
 	generateRandomId() {
