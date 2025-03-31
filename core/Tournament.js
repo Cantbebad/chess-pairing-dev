@@ -254,7 +254,7 @@ export class Tournament {
 		}
 
 		if (doubleRounded) {
-			let inversePairing = getInversePairing(rounds)
+			let inversePairing = this.getInversePairing(rounds)
 			rounds.push(...inversePairing)
 		}
 
