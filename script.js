@@ -166,6 +166,13 @@ export class Controller {
 	}
 	
 	addExtraPairing(obj=null) {
+		if (obj === null) {
+			// called as button action
+			if (! confirm("This will add one extra pairing (many new rounds).\nIs it OK ?")) {
+				return
+			}
+		}
+
 		obj = obj !== null ? obj : this.data
 
 		const extraPairingCountNow = this.data.getExtraPairingCount(obj)
@@ -419,7 +426,10 @@ export class Controller {
 		roundTabs.removeClass('active');
 		roundContents.removeClass('active');
 
-		$(`.round-tab:nth-child(${roundNumber})`).addClass("active");
+		const subcontainerNumber = Math.ceil(roundNumber/10)
+		const childNumber = ((roundNumber-1) % 10) +1
+		
+		$(`.rounds-subcontainer:nth-of-type(${subcontainerNumber}) .round-tab:nth-of-type(${childNumber})`).addClass("active");
 		$(`#round${roundNumber}`).addClass("active");
 	}
 
@@ -806,12 +816,23 @@ export class Controller {
 		const roundTabs = $("#roundTabs");
 		const roundContents = $("#roundContents");
 
+		// Create subcontainer - too many rounds for one line sometimes
+		let subcontainer = null
+		if (Number(roundNumber)%10 === 1) {
+			subcontainer = $("<div>")
+			subcontainer.addClass("rounds-subcontainer")
+			roundTabs.append(subcontainer)
+		}
+		else {
+			subcontainer = $("#roundTabs .rounds-subcontainer:last()")
+		}
+
 		// Create round tab
 		const roundTab = $("<div>");
 		roundTab.addClass("round-tab")
 		roundTab.text(`${roundNumber}`);
 		roundTab.on("click", function () { app.openRound(roundNumber)}); // Use captured round number
-		roundTabs.append(roundTab);
+		subcontainer.append(roundTab);
 
 		// Create round content
 		const roundContent = $("<div>");

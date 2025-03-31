@@ -209,7 +209,7 @@ table.table-demo td {
 }
 
 
-.round-container {
+.round-container .rounds-subcontainer {
     margin-top: 8px;
     display: flex;
 	align-items: center;
