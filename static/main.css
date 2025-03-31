@@ -168,7 +168,7 @@ opacity: 0.5;
 pointer-events: none;
 }
 table.locked {
-opacity: 0.9;
+opacity: 0.5;
 pointer-events: none;
 }
 
@@ -176,11 +176,16 @@ table.locked button {
 	color: var(--cp-color-disabled);
 }
 
-/*
 button:disabled {
+	opacity: 0.5;
 	color: var(--cp-color-disabled);
 }
-*/
+
+input:disabled, select:disabled {
+	opacity: 0.5;
+	color: var(--cp-color-disabled);
+}
+
 #td-verify-options {
 	text-align: center;
 	font-weight: bold;

@@ -174,6 +174,11 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").removeClass('locked');
 		$("#criteria").prop('disabled', false);
+		$("#inp-title").prop('disabled', false);
+		$("#inp-date").prop('disabled', false);
+		$("#inp-place").prop('disabled', false);
+		$("#inp-double-rounded").prop('disabled', false);
+		$("#inp-auto-shuffle").prop('disabled', false);
 
 		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
@@ -183,12 +188,18 @@ export class Controller {
 	lockWidgets() {
 		// Disable input fields
 
+
 		// Disable buttons
 		$('#tab1 .button-container button').prop('disabled', true);
 		
 		// Optionally, add a visual indication that the table is locked
 		$("#dataTable").addClass('locked');
 		$("#criteria").prop('disabled', true);
+		$("#inp-title").prop('disabled', true);
+		$("#inp-date").prop('disabled', true);
+		$("#inp-place").prop('disabled', true);
+		$("#inp-double-rounded").prop('disabled', true);
+		$("#inp-auto-shuffle").prop('disabled', true);
 
 		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
