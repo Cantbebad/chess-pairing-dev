@@ -106,12 +106,14 @@ export class Tournament {
 		}
 	}
 
-	getExtraPairingCount() {
-		if (this.players.length < 2) throw new Error("fn called in wrong context")	
-		return Math.ceil(this.rounds.length/(this.players.length-1))
+	getExtraPairingCount(obj=null) {
+		obj = obj ? obj : this
+
+		if (obj.players.length < 2) throw new Error("fn called in wrong context")	
+		return Math.ceil(obj.rounds.length/(obj.players.length-1))
 	}
 
-	getExtraPairingIdx(round) {
+	getExtraPairingIdx(round, obj=null) {
 		// this gets index for Crosstable for extra pairings
 		// 'round' begins at 1
 		//
@@ -119,8 +121,22 @@ export class Tournament {
 		// index 0,1 are for double-rounded pairing
 		// extra pairing 2,4,6... will be same as 0
 		// extra pairing 3,5,7... will be same as 1
-		if (this.players.length < 2) throw new Error("fn called in wrong context")
-		return Math.ceil(round/(this.players.length-1)) - 1
+
+		obj = obj ? obj : this
+		if (obj.players.length < 2) throw new Error("fn called in wrong context")
+		return Math.ceil(round/(obj.players.length-1)) - 1
+	}
+
+	addExtraPairing(obj=null) {
+		obj = obj ? obj : this
+
+		const pairingsCount = this.getExtraPairingCount(obj)
+		let newRounds =  this.generateCorePairingIdx(obj.players.length, false)
+		if ( (pairingsCount + 1) % 2 == 0) {
+			newRounds = this.getInversePairing(newRounds)
+		}
+
+		obj.rounds.push(...newRounds)
 	}
 		
 	generateRandomId() {
@@ -238,14 +254,22 @@ export class Tournament {
 		}
 
 		if (doubleRounded) {
-			const numOfRounds = rounds.length
-			for (let i=0; i< numOfRounds; i++) {
-				rounds.push(new Array())
-				for (let y=0; y < rounds[i].length; y++) {
-					rounds[numOfRounds+i].push(
-						new ResultRow(rounds[i][y].player2Idx, rounds[i][y].player1Idx, "-")
-					)
-				}
+			let inversePairing = getInversePairing(rounds)
+			rounds.push(...inversePairing)
+		}
+
+		return rounds
+	}
+	
+	getInversePairing(roundsOrg) {
+		const numOfRounds = roundsOrg.length
+		let rounds = []
+		for (let i=0; i < numOfRounds; ++i) {
+			rounds.push(new Array())
+			for (let y=0; y < roundsOrg[i].length; y++) {
+				rounds[i].push(
+					new ResultRow(roundsOrg[i][y].player2Idx, roundsOrg[i][y].player1Idx, "-")
+				)
 			}
 		}
 

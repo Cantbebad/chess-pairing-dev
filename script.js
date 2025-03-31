@@ -92,9 +92,26 @@ export class Controller {
 				if (cookie_data.results.length || 
 					cookie_data.tournamentInfo.wasPairingGenerated) {
 
-						preparedData.rounds = this.data.generateCorePairingIdx(
-							cookie_data.players.length,
-							cookie_data.tournamentInfo.doubleRounded)
+					preparedData.rounds = this.data.generateCorePairingIdx(
+						cookie_data.players.length,
+						cookie_data.tournamentInfo.doubleRounded)
+
+					// generate Extra pairings
+					const roundsToBeGenerated = 
+						cookie_data.results.length/(cookie_data.players.length/2) - preparedData.rounds.length
+	
+					let extraPairingsToBeGenerated = 
+						Math.ceil(roundsToBeGenerated / cookie_data.players.length)
+					
+					if (extraPairingsToBeGenerated < 0) {
+						log.error("extra pairings count is < 0")
+						extraPairingsToBeGenerated = 0
+					}
+
+					for (let i=0; i < extraPairingsToBeGenerated; ++i) {
+						this.addExtraPairing(preparedData)
+					}
+						                   
 				}
 
 				// recreate results
@@ -147,6 +164,30 @@ export class Controller {
 		this.clearAll()
 		this.openTab('tab1')
 	}
+	
+	addExtraPairing(obj=null) {
+		obj = obj !== null ? obj : this.data
+
+		const extraPairingCountNow = this.data.getExtraPairingCount(obj)
+		const roundsPerOneParing = obj.players.length - 1
+
+		const firstExtraRoundIdx = extraPairingCountNow * roundsPerOneParing
+
+		this.data.addExtraPairing(obj)
+		
+		const lastExtraRoundIdx = (extraPairingCountNow+1) * roundsPerOneParing -1
+
+		if (obj === this.data) {
+			// Create tabs for extra rounds
+			for (let i = firstExtraRoundIdx; i <= lastExtraRoundIdx; ++i) {
+				// param here starts from 1 (as names)
+				this.createRoundTab(i+1);
+			}
+
+			this.saveToCookie()
+			this.openTab('tab2')
+		}
+	}
 
 	clearAll() {
 		// clear all Tournament data
@@ -183,6 +224,9 @@ export class Controller {
 		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
 			$(".pairing-not-generated").addClass("show")
+
+		// this has inverse action
+		$("#btn-add-extra-pairing").prop('disabled', true)
 	}
 
 	lockWidgets() {
@@ -204,6 +248,9 @@ export class Controller {
 		this.wasPairingGenerated() ?
 			$(".pairing-not-generated").removeClass("show") :
 			$(".pairing-not-generated").addClass("show")
+
+		// this has inverse action
+		$("#btn-add-extra-pairing").prop('disabled', false)
 	}
 
 	getPlayerTableRow(idx) {
