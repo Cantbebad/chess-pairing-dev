@@ -194,6 +194,14 @@ export class Tournament {
 		}
 		return ""
 	}
+
+	// called on btns 'move up', 'move down'
+	swapPlayerWithNext(playerRowIdx) {
+		//let a = structuredClone(this.players[rowIndex])
+		let a = this.players[playerRowIdx]
+		this.players[playerRowIdx] = this.players[playerRowIdx+1]
+		this.players[playerRowIdx+1] = a
+	}
 	
 	lookupPlayerIndex(name) {
 	    // return index of requested player

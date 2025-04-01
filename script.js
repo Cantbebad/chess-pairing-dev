@@ -673,13 +673,21 @@ export class Controller {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
 
-		// TODO
-		console.log("TODO")
 		if (rowIndex > 0) {
-			;
+			try {
+				let x = $(`#dataTable tbody tr:nth-of-type(${rowIndex+1})`)
+				x.prev().insertAfter(x)
+
+				appObj.data.swapPlayerWithNext(rowIndex-1)
+
+				appObj.saveToCookie()
+				appObj.checkPlayerTableLastField()
+			}
+			catch(e) {
+				log.error(e)
+			}
 		}
 
-		appObj.checkPlayerTableLastField()
 	}
 
 	// HTML API
@@ -687,13 +695,20 @@ export class Controller {
 		let row = button.parentNode.parentNode;
 		let rowIndex = row.rowIndex - 1; // Adjust for header row
 
-		// TODO
-		console.log("TODO")
 		if (rowIndex < appObj.data.players.length-1) {
-			;
+			try {
+				let x = $(`#dataTable tbody tr:nth-of-type(${rowIndex+1})`)
+				x.next().insertBefore(x)
+				appObj.data.swapPlayerWithNext(rowIndex)
+
+				appObj.saveToCookie()
+				appObj.checkPlayerTableLastField()
+			}
+			catch(e) {
+				log.error(e)
+			}
 		}
 
-		appObj.checkPlayerTableLastField()
 	}
 
 	removePlayerByRowIdx(row, sanitize=true) {
