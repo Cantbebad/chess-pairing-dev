@@ -33,6 +33,13 @@ export class Controller {
 
 	constructor(tournament_data) {
 		this.data = tournament_data
+		
+		// this is not saved, so it does not persist after refresh,
+		// When action kind of 'lock and generate pairing' was selected,
+		// this will prevent submethods add new empty row in Players Html Table
+		// used in time window between 'action do pairing is selected'
+		// and this.data.wasPairingGenerated is set
+		this.tmpLockAutoAddingEmptyRow = false
 	}
 
 	initialize() {
@@ -162,6 +169,7 @@ export class Controller {
 		}
 
 		this.clearAll()
+
 		this.openTab('tab1')
 	}
 	
@@ -199,6 +207,7 @@ export class Controller {
 	clearAll() {
 		// clear all Tournament data
 		this.data = new Tournament()
+		this.tmpLockAutoAddingEmptyRow = false
 
 		this.clearPlayersTable(true)
 		this.clearResultsTab()
@@ -206,7 +215,7 @@ export class Controller {
 		this.clearStandingsTab()
 
 		// set no criteria names in standing table
-		this.updateStandingTableNames([])
+		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 
 		this.checkPlayerTableLastField();
 
@@ -216,6 +225,8 @@ export class Controller {
 	}
 
 	unlockWidgets() {
+		// TODO: hide them
+
 		// Enable buttons
 		$('#tab1 .button-container button').prop('disabled', false);
 		
@@ -237,13 +248,13 @@ export class Controller {
 	}
 
 	lockWidgets() {
-		// Disable input fields
-
+		// TODO: hide them
 
 		// Disable buttons
 		$('#tab1 .button-container button').prop('disabled', true);
 		
 		// Optionally, add a visual indication that the table is locked
+		// Disable input fields
 		$("#dataTable").addClass('locked');
 		$("#criteria").prop('disabled', true);
 		$("#inp-title").prop('disabled', true);
@@ -267,8 +278,24 @@ export class Controller {
 		return rows[idx]
 	}
 
+	lockAutoAddingEmptyRow() {
+		this.tmpLockAutoAddingEmptyRow = true
+	}
+
+	unlockAutoAddingEmptyRow() {
+		this.tmpLockAutoAddingEmptyRow = false
+
+		// only reasonable state for using this method is,
+		// when we locked with lockAutoAddingEmptyRow,
+		// removed empty lines from player table,
+		// but later we did not reach state with generated pairing
+		// so check immeditelly in this method is ok now
+		this.checkPlayerTableLastField()
+	}
+
 	checkPlayerTableLastField() {
-		if (!this.wasPairingGenerated() &&
+		if (!this.tmpLockAutoAddingEmptyRow &&
+			!this.wasPairingGenerated() &&
 			(!this.data.players.length ||
 			this.data.players[this.data.players.length-1].name !== '')
 		) {
@@ -343,9 +370,10 @@ export class Controller {
 	}
 
 	lockAndPairing() {
+	    this.lockAutoAddingEmptyRow()
 		const isOk = this._lockAndPairing()
 		if (!isOk) {
-			this.checkPlayerTableLastField();
+			this.unlockAutoAddingEmptyRow()
 		}
 		return isOk
 	}
@@ -451,6 +479,9 @@ export class Controller {
 	}
 
 	importDemoPlayers(evenNumOfPlayers = true, confirmed = false) {
+		this.lockAutoAddingEmptyRow()
+		this.removeEmptyFieldsFromPlayersTable()
+
 		// Elo rating system was adopted by FIDE in 1970 (wiki)
 		// may be it is possible to calc it backward, I did not try
 		let players = [
@@ -479,6 +510,7 @@ export class Controller {
 			this.addPlayerToTable(player.name, player.Elo, true);
 		})
 		
+		this.unlockAutoAddingEmptyRow()
 		this.updatePlayersTable();
 	}
 
@@ -591,8 +623,14 @@ export class Controller {
 		})
 
 		// lock widgets if pairing was generated
+		// TODO: this is from prev version
+		// now it should run with easPairingGenerated (need tests)
 		if (this.data.rounds.length) {
 			this.lockWidgets()
+		}
+		else {
+			// needed for widgets with inverse action
+			this.unlockWidgets()
 		}
 
 		// find first empty result
@@ -1228,6 +1266,7 @@ export class Controller {
 	}
 
 	demo(evenPlayers=true, completeTournament=true) {
+		this.lockAutoAddingEmptyRow()
 		this.insertOtherTournamentData({
 			'title' : 'Fictional Tournament',
 			'date': '4th Sixteenber, 6044',
@@ -1240,6 +1279,7 @@ export class Controller {
 		this.importDemoPlayers(evenPlayers, true);
 		this.randomizePlayers();
 		if (!this.lockAndPairing()) {
+			this.unlockAutoAddingEmptyRow()
 			return
 		}
 
@@ -1251,10 +1291,12 @@ export class Controller {
 
 	debugLoadCookie(evenPlayers=true, paired=true) {
 		this.clearAll()
+		this.lockAutoAddingEmptyRow()
 		this.removeEmptyFieldsFromPlayersTable()	
 		this.importDemoPlayers(evenPlayers, true);
 		if (! paired) {
 			this.saveToCookie()
+			this.unlockAutoAddingEmptyRow()
 			// force refresh
 			//window.location.reload()
 			return
