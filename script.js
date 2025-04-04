@@ -40,6 +40,9 @@ export class Controller {
 		// used in time window between 'action do pairing is selected'
 		// and this.data.wasPairingGenerated is set
 		this.tmpLockAutoAddingEmptyRow = false
+		
+		// cache some selectors
+		this.globalCrosstableElement = null
 	}
 
 	initialize() {
@@ -949,6 +952,7 @@ export class Controller {
 	clearCrosstableTab() {
 		let table = $("#crossTable");
 		table.html(""); // Clear existing rows
+		this.globalCrosstableElement = null
 	}
 
 	// TODO: crosstable sorted by standing (a little bit tricky to code)
@@ -1011,7 +1015,13 @@ export class Controller {
 		// two coresponding fields in the table are updated
 		let ind1 = resultRow.player1Idx
 		let ind2 = resultRow.player2Idx
-		let table = $("#crossTable tbody");
+
+		if (this.globalCrosstableElement === null) {
+			this.globalCrosstableElement = $("#crossTable tbody");
+		}
+
+		let table = this.globalCrosstableElement
+
 		// nth starts from 1 !
 		// the first cell in row is player name
 		let cell = table.find(`tr:nth-of-type(${ind1+1}) td:nth-of-type(${ind2 + 2})`)
@@ -1098,14 +1108,17 @@ export class Controller {
 	updateResultsTab() {
 		if (!this.wasPairingGenerated()) return
 		this.data.rounds.forEach((round, roundIndex) => {
+			let roundElem = $(`#round${roundIndex + 1}`)
+
 			round.forEach((pair, pairIndex) => {
-				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
-				let selectElement = $(`#round${roundIndex + 1} #sel${roundIndex}_${pairIndex}`);
+				let result = pair.result.toString();
+
+				let selectElement = roundElem.find(`#sel${roundIndex}_${pairIndex}`);
 				if (selectElement) {
 					selectElement.val(result);
 				}
 				this.updateCrosstable(
-					this.data.rounds[roundIndex][pairIndex], 
+					pair, 
 					this.data.getExtraPairingIdx(roundIndex+1)
 				)
 			});
