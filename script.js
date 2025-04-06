@@ -150,16 +150,6 @@ export class Controller {
 
 	setCookie(tournament_id) {
 		if(CookieConsent.acceptedCategory('Tournament')){
-			try {
-				if (document.constructor.name === 'NodeDocument484948494849') {
-					// when we are in NodeJs 
-					document.cookie[Controller.COOKIE_ID] = tournament_id	
-					return
-				}
-			}
-			catch(e) {
-				console.log("error in setting cookie: " + e)
-			}
 			document.cookie= `${Controller.COOKIE_ID}${tournament_id}; max-age=999999;`
 		}
 	}

@@ -1,21 +1,6 @@
 /* brx 2025
  */
 
-/*
-// nodejs workaround
-if (typeof document !== 'undefined') {
-	// in browser
-}
-else {
-	// in nodejs
-	// use unique class name 
-	class NodeDocument484948494849 {;}
-
-	var document = new NodeDocument484948494849()
-	document.cookie = {}
-}
-*/
-
 export class CookiesWrapper {
 	// ----------------------------------------
 	update_cookie(name, value, max_age=31536000) {
@@ -24,35 +9,10 @@ export class CookiesWrapper {
 		//const MONTH = 2592000 // (30 days)
 		//const YEAR = 31536000
 
-		////console.log("in update cookie")
-		// nodejs workaround
-		try {
-			if (document.constructor.name === 'NodeDocument484948494849') {
-				document.cookie[name] = value
-				return
-			}
-		}			
-		catch(e) {
-			console.log(e.stack)
-		}
-		
 		document.cookie = name+"="+value+'; max-age='+max_age
-		
 	}
 
 	get_cookie_value(name) {
-		// nodejs workaround
-		try {
-			if (document.constructor.name === 'NodeDocument484948494849') {
-				if (typeof document.cookie[name] === 'undefined') {
-					return null
-				}
-				return document.cookie[name]
-			}
-		}
-		catch(e) {
-			console.log(e)
-		}
 
 		let cookies = document.cookie.split(";").map((x) => x.trim())
 
